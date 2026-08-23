@@ -3546,6 +3546,32 @@
           display: none !important;
         }
       }
+      @media (max-width: 560px) {
+        /* When a regular group member is only allowed to see Game, make
+           the Game tab span the entire mobile workspace width. */
+        #dashboard .workspace-nav:has(.workspace-tab[data-panel="historyPanel"].hidden)
+          .workspace-tab[data-panel="gamePanel"] {
+          grid-column: 1 / -1;
+          width: 100%;
+        }
+
+        #dashboard .workspace-nav:has(.workspace-tab[data-panel="historyPanel"][hidden])
+          .workspace-tab[data-panel="gamePanel"] {
+          grid-column: 1 / -1;
+          width: 100%;
+        }
+      }
+      @media (max-width: 560px) {
+        #dashboard .workspace-nav.member-game-only {
+          grid-template-columns: 1fr !important;
+        }
+
+        #dashboard .workspace-nav.member-game-only
+          .workspace-tab[data-panel="gamePanel"] {
+          grid-column: 1 / -1;
+          width: 100%;
+        }
+      }
 </style>
   </head>
 
@@ -4607,6 +4633,9 @@
           panel.classList.toggle("hidden", !canViewHistoricalData);
           panel.hidden = !canViewHistoricalData;
         });
+
+        const workspaceNav = document.querySelector(".workspace-nav");
+        workspaceNav?.classList.toggle("member-game-only", !canViewHistoricalData);
 
         if (!canViewHistoricalData) showPanel("gamePanel");
       }
@@ -7229,6 +7258,24 @@
           return;
         }
 
+        const { data: rosterPlayers, error: rosterError } = await supabase
+          .from("group_players")
+          .select("id")
+          .eq("group_id", selectedGroupId)
+          .eq("active", true);
+
+        if (rosterError) {
+          console.error("Could not load leaderboard roster:", rosterError);
+          document.getElementById("leaderboard").innerHTML = `
+            <p class="empty">Could not load leaderboard roster.</p>
+          `;
+          return;
+        }
+
+        const rosterPlayerIds = new Set(
+          (rosterPlayers || []).map((player) => player.id),
+        );
+
         let query = supabase
           .from("games")
           .select(
@@ -7262,10 +7309,10 @@
         const { data: games, error } = await query;
 
         if (error) {
-          console.error(error);
+          console.error("Could not load leaderboard games:", error);
 
           document.getElementById("leaderboard").innerHTML = `
-          <p class="empty">Could not load leaderboard.</p>
+          <p class="empty">Could not load leaderboard: ${escapeHtml(error.message || "Unknown error")}</p>
         `;
           return;
         }
@@ -7328,7 +7375,9 @@
         // selected date range. Their leaderboard totals still use ALL of
         // their qualifying-period games, not just the minimum number.
         const eligiblePlayers = Array.from(totalsByPlayer.values()).filter(
-          (player) => player.games_played >= leaderboardMinGames,
+          (player) =>
+            rosterPlayerIds.has(player.player_id) &&
+            player.games_played >= leaderboardMinGames,
         );
 
         const players = eligiblePlayers

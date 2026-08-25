@@ -1465,12 +1465,24 @@
         margin-top: 14px;
       }
 
-      .history-page-label {
-        min-width: 88px;
+      .history-page-select-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         color: var(--muted);
         font-size: 0.76rem;
         font-weight: 700;
-        text-align: center;
+      }
+
+      .history-page-select {
+        min-width: 82px;
+        padding: 6px 26px 6px 9px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--ink);
+        font-size: 0.78rem;
+        font-weight: 700;
       }
 
 
@@ -3572,6 +3584,28 @@
           width: 100%;
         }
       }
+
+      @media (max-width: 560px) {
+        /* Keep Game, History and Leaderboard on one mobile row when Manage
+           Groups is not one of the visible workspace tabs. */
+        #dashboard .workspace-nav:not(:has(#manageGroupsTab:not(.hidden))) {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 4px;
+        }
+
+        #dashboard .workspace-nav:not(:has(#manageGroupsTab:not(.hidden)))
+          .workspace-tab[data-panel="gamePanel"],
+        #dashboard .workspace-nav:not(:has(#manageGroupsTab:not(.hidden)))
+          .workspace-tab[data-panel="historyPanel"],
+        #dashboard .workspace-nav:not(:has(#manageGroupsTab:not(.hidden)))
+          .workspace-tab[data-panel="leaderboardPanel"] {
+          grid-column: auto;
+          width: 100%;
+          padding-left: 6px;
+          padding-right: 6px;
+          white-space: nowrap;
+        }
+      }
 </style>
   </head>
 
@@ -4173,6 +4207,9 @@
       let expandedLeaderboardPlayerId = null;
       let draftDirty = false;
       let lastSavedAt = null;
+      // Prevent duplicate commits when mobile focusout and the Save/check
+      // button fire back-to-back for the same player.
+      const savingPlayerEntries = new Set();
 
       const money = (value) =>
         new Intl.NumberFormat("en-US", {
@@ -7235,9 +7272,15 @@
                 Previous
               </button>
 
-              <span class="history-page-label">
-                Page ${historyPage} of ${totalPages}
-              </span>
+              <label class="history-page-select-label">
+                <span>Page</span>
+                <select class="history-page-select" data-history-page-select aria-label="History page">
+                  ${Array.from({ length: totalPages }, (_, index) => {
+                    const page = index + 1;
+                    return `<option value="${page}" ${page === historyPage ? "selected" : ""}>${page} of ${totalPages}</option>`;
+                  }).join("")}
+                </select>
+              </label>
 
               <button
                 type="button"
@@ -8664,65 +8707,67 @@
         });
 
       async function saveEditingEntry(playerId) {
-        const entry = gameEntries.find((item) => item.playerId === playerId);
+        if (savingPlayerEntries.has(playerId)) return false;
 
+        const entry = gameEntries.find((item) => item.playerId === playerId);
         if (!entry || !canEditActiveGame()) return false;
 
-        const rawBuyin = String(entry.pendingBuyin ?? "").trim();
-        const amount = Number.parseFloat(rawBuyin);
+        savingPlayerEntries.add(playerId);
+        try {
+          const rawBuyin = String(entry.pendingBuyin ?? "").trim();
+          const amount = Number.parseFloat(rawBuyin);
 
-        if (
-          rawBuyin !== "" &&
-          (!Number.isFinite(amount) || amount <= 0)
-        ) {
-          showToast("Enter an additional buy-in greater than $0.", "error");
-          return false;
-        }
-
-        const rawCashout = String(entry.cashout ?? "").trim();
-        const cashoutAmount = Number.parseFloat(rawCashout);
-
-        if (
-          rawCashout !== "" &&
-          (!Number.isFinite(cashoutAmount) || cashoutAmount < 0)
-        ) {
-          showToast("Enter a valid cash-out amount.", "error");
-          return false;
-        }
-
-        if (Number.isFinite(amount) && amount > 0) {
-          if (!currentGameId) {
-            const gameId = await saveGame(false);
-            if (!gameId) return false;
-          }
-
-          const { error } = await supabase
-            .from("game_buyin_transactions")
-            .insert({
-              game_id: currentGameId,
-              group_player_id: playerId,
-              amount,
-            });
-
-          if (error) {
-            console.error(error);
-            showToast(`Could not save buy-in: ${error.message}`, "error");
+          if (rawBuyin !== "" && (!Number.isFinite(amount) || amount <= 0)) {
+            showToast("Enter an additional buy-in greater than $0.", "error");
             return false;
           }
 
-          await loadBuyinTransactions(currentGameId);
+          const rawCashout = String(entry.cashout ?? "").trim();
+          const cashoutAmount = Number.parseFloat(rawCashout);
+
+          if (rawCashout !== "" && (!Number.isFinite(cashoutAmount) || cashoutAmount < 0)) {
+            showToast("Enter a valid cash-out amount.", "error");
+            return false;
+          }
+
+          if (Number.isFinite(amount) && amount > 0) {
+            if (!currentGameId) {
+              const gameId = await saveGame(false);
+              if (!gameId) return false;
+            }
+
+            // Typed buy-ins are additional transactions. saveGame only writes
+            // the resulting total to game_entries and never creates a
+            // transaction row, so this insert happens exactly once.
+            const { error } = await supabase
+              .from("game_buyin_transactions")
+              .insert({
+                game_id: currentGameId,
+                group_player_id: playerId,
+                amount,
+              });
+
+            if (error) {
+              console.error(error);
+              showToast(`Could not save buy-in: ${error.message}`, "error");
+              return false;
+            }
+
+            await loadBuyinTransactions(currentGameId);
+          }
+
+          entry.pendingBuyin = "";
+          entry.isEditing = false;
+          await saveGame(false);
+          renderGameEntries();
+          updateGameTotals();
+          saveDraft();
+          markDraftSaved();
+          showToast("Player amounts saved.", "success");
+          return true;
+        } finally {
+          savingPlayerEntries.delete(playerId);
         }
-
-        entry.pendingBuyin = "";
-        entry.isEditing = false;
-
-        await saveGame(false);
-        renderGameEntries();
-        updateGameTotals();
-        saveDraft();
-        markDraftSaved();
-        showToast("Player amounts saved.", "success");
-        return true;
       }
 
       document
@@ -8789,12 +8834,15 @@
             // If the row was re-rendered because the user tapped another
             // player's edit button, it is already detached; that is still an
             // outside interaction and must commit the old player's values.
+            const playerId = input.dataset.entryId;
+            if (savingPlayerEntries.has(playerId)) return;
+
             const activeElement = document.activeElement;
             if (row.isConnected && activeElement && row.contains(activeElement)) {
               return;
             }
 
-            saveEditingEntry(input.dataset.entryId).catch((error) => {
+            saveEditingEntry(playerId).catch((error) => {
               console.error("Could not auto-save player amounts:", error);
             });
           }, 0);
@@ -9131,7 +9179,7 @@ document
       renderGameEntries();
       updateGameTotals();
           document.getElementById("gameHistory")?.addEventListener("click", (event) => {
-        const button = event.target.closest("[data-history-page]");
+        const button = event.target.closest("button[data-history-page]");
         if (!button || button.disabled) return;
 
         if (button.dataset.historyPage === "prev") {
@@ -9140,6 +9188,14 @@ document
           historyPage += 1;
         }
 
+        applyHistoryFilters(false);
+      });
+
+      document.getElementById("gameHistory")?.addEventListener("change", (event) => {
+        const select = event.target.closest("[data-history-page-select]");
+        if (!select) return;
+
+        historyPage = Number.parseInt(select.value, 10) || 1;
         applyHistoryFilters(false);
       });
 

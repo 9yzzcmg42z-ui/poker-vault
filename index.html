@@ -3913,6 +3913,7 @@
               </div>
 
               <div class="actions action-bar" id="gameActionBar">
+                <button class="secondary small hidden" id="takeoverGameButton" type="button">Takeover</button>
                 <button class="secondary" id="calculateButton">Settle</button>
                 <button class="ghost" id="closeGameButton">Close</button>
                 <button class="danger" id="clearGameButton">Clear</button>
@@ -4187,6 +4188,7 @@
 
       let currentUser = null;
       let currentAppRole = "member";
+      let groupMembershipIds = new Set();
       let groups = [];
       let roster = [];
       let selectedGroupId =
@@ -4953,6 +4955,26 @@
         showToast(`Password reset email sent to ${email}.`, "success");
       }
 
+      async function loadGroupMemberships() {
+        groupMembershipIds = new Set();
+
+        if (!currentUser) return;
+
+        const { data, error } = await supabase
+          .from("group_users")
+          .select("group_id")
+          .eq("user_id", currentUser.id);
+
+        if (error) {
+          // The Takeover RPC remains the authoritative permission check. If
+          // this read is blocked by RLS, simply omit the extra UI hint.
+          console.warn("Could not load group memberships:", error.message);
+          return;
+        }
+
+        groupMembershipIds = new Set((data || []).map((row) => row.group_id));
+      }
+
       async function loadGroups() {
         let data;
         let error;
@@ -4972,6 +4994,7 @@
         }
 
         groups = data || [];
+        await loadGroupMemberships();
 
         if (
           selectedGroupId &&
@@ -7851,13 +7874,65 @@
         await saveGame(false);
       }
 
+      function canTakeOverActiveGame() {
+        if (!currentUser || !activeGameId || activeGameStatus !== "draft") {
+          return false;
+        }
+
+        // The current host does not need a takeover button. A group owner or
+        // a PokerVault Admin/Super Admin who is a member of the selected group
+        // can take over an active draft. The database RPC is authoritative.
+        const isEligibleAppAdmin =
+          isAppAdmin() && groupMembershipIds.has(selectedGroupId);
+
+        return activeGameOwnerId !== currentUser.id && (
+          isGroupAdmin() || isEligibleAppAdmin
+        );
+      }
+
       function canEditActiveGame() {
         if (!activeGameId) return true;
 
-        return (
-          currentUser &&
-          (activeGameOwnerId === currentUser.id || isGroupAdmin())
-        );
+        // Only the current host can edit. Group owners and PokerVault admins
+        // must explicitly take over first; this prevents two people from
+        // editing the same live game at the same time.
+        return Boolean(currentUser && activeGameOwnerId === currentUser.id);
+      }
+
+      async function takeOverActiveGame() {
+        if (!activeGameId || !canTakeOverActiveGame()) return;
+
+        const confirmed = await confirmModal({
+          title: "Take over this game?",
+          body: "You will become the game host and can continue recording buy-ins, cash-outs, settlement, and closing the game. The current host will switch to live view.",
+          confirmLabel: "Take over",
+        });
+
+        if (!confirmed) return;
+
+        const gameId = activeGameId;
+        const { error } = await supabase.rpc("takeover_poker_game", {
+          p_game_id: gameId,
+        });
+
+        if (error) {
+          console.error("Could not take over game:", error);
+          const missingRpc =
+            /could not find the function.*takeover_poker_game/i.test(error.message || "") ||
+            /function public\.takeover_poker_game/i.test(error.message || "");
+          showToast(
+            missingRpc
+              ? "Takeover is not enabled in Supabase yet. Run the takeover SQL migration, then try again."
+              : `Could not take over game: ${error.message}`,
+            "error",
+          );
+          return;
+        }
+
+        // Refresh immediately instead of waiting for realtime delivery. The
+        // games UPDATE subscription will also refresh every other viewer.
+        await loadActiveGame(gameId);
+        showToast("You are now the game host.", "success");
       }
 
       // Closing a game deletes its buy-in transactions by design, so an empty
@@ -8112,12 +8187,19 @@
         toggleHidden("gameSubtitle", !editable);
         toggleHidden("hostDraftNotice", !editable);
         toggleHidden("saveStatus", !editable);
+        toggleHidden("takeoverGameButton", !canTakeOverActiveGame());
         toggleHidden("addPlayerArea", !editable);
         toggleHidden("applyDefaultBuyinButton", !editable);
         toggleHidden("calculateButton", !editable);
         toggleHidden("closeGameButton", !editable);
         toggleHidden("clearGameButton", !editable);
-        toggleHidden("gameActionBar", !editable);
+        // Keep the action bar visible for a non-host admin who is eligible
+        // to take over. The other host-only actions remain hidden; otherwise
+        // hiding the entire bar would also hide the Takeover button.
+        toggleHidden(
+          "gameActionBar",
+          !editable && !canTakeOverActiveGame(),
+        );
 
         // Members get the same live player table and totals as the host, but
         // without any editing controls. Only the host-only setup controls are
@@ -8358,7 +8440,7 @@
         subscribeToActiveGame(createdGame.id);
         setGameSetupCollapsed(false);
 
-        showToast("Game started. You are the host unless the group admin takes over.", "success");
+        showToast("Game started. You are the host; an eligible admin can take over if needed.", "success");
       }
 
       async function loadCurrentLiveGame() {
@@ -9131,6 +9213,10 @@ document
       document
         .getElementById("clearGameButton")
         .addEventListener("click", clearGame);
+
+      document
+        .getElementById("takeoverGameButton")
+        .addEventListener("click", takeOverActiveGame);
 
       document
         .getElementById("copyButton")

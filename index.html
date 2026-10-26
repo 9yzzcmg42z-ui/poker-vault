@@ -3922,7 +3922,7 @@
                   <div class="two-columns" style="margin-top: 10px">
                     <div>
                       <label for="gameName">Game name</label>
-                      <input id="gameName" value="Friday Night Poker" />
+                      <input id="gameName" value="" />
                     </div>
 
                     <div>
@@ -4022,14 +4022,7 @@
                 <div class="section-head">
                   <h3>Expenses</h3>
                   <span class="section-count" id="expenseCount"></span>
-                </div>
-
-                <p class="subtitle" id="expensesHelp">
-                  Money taken out of the pot, such as a cut from each round
-                  for food, drinks or cards. Cash-outs plus expenses must equal
-                  buy-ins, and the expenses show up as a payment to Expenses
-                  in the settlement.
-                </p>
+                </div>               
 
                 <div id="expenseAddForm">
                   <div class="expense-form-grid">
@@ -4039,6 +4032,7 @@
                         id="expenseDescription"
                         type="text"
                         maxlength="60"
+                        value="Round 1"
                         autocomplete="off"
                         placeholder="Round 1"
                       />
@@ -4732,6 +4726,32 @@
         lastSaved.textContent = savedTime
           ? `Saved ${savedTime}`
           : "Not saved yet";
+      }
+
+      // "Sunday Evening", "Saturday Morning", and so on. Games that start
+      // after midnight but before 5am still count as the night before.
+      let gameNameIsAuto = true;
+
+      function defaultGameName(date = new Date()) {
+        const hour = date.getHours();
+        const day = new Date(date);
+
+        if (hour < 5) day.setDate(day.getDate() - 1);
+
+        const weekday = new Intl.DateTimeFormat("en-US", {
+          weekday: "long",
+        }).format(day);
+
+        const period =
+          hour >= 5 && hour < 12
+            ? "Morning"
+            : hour >= 12 && hour < 17
+              ? "Afternoon"
+              : hour >= 17 && hour < 21
+                ? "Evening"
+                : "Night";
+
+        return `${weekday} ${period}`;
       }
 
       function todayForInput() {
@@ -6892,7 +6912,7 @@
           currentGameId = draft.gameId || null;
 
           document.getElementById("gameName").value =
-            draft.gameName || "Friday Night Poker";
+            draft.gameName || defaultGameName();
 
           document.getElementById("gameDate").value =
             draft.gameDate || todayForInput();
@@ -6923,7 +6943,8 @@
         gameExpenses = [];
         currentGameId = null;
 
-        document.getElementById("gameName").value = "Friday Night Poker";
+        document.getElementById("gameName").value = defaultGameName();
+        gameNameIsAuto = true;
         document.getElementById("gameDate").value = todayForInput();
         document.getElementById("defaultBuyin").value = "15";
 
@@ -8983,7 +9004,13 @@
           return;
         }
 
-        const gameName = document.getElementById("gameName").value.trim() || "Poker Game";
+        // Refresh an untouched default so it reflects when the game actually
+        // starts, not when the page was opened.
+        if (gameNameIsAuto) {
+          document.getElementById("gameName").value = defaultGameName();
+        }
+
+        const gameName = document.getElementById("gameName").value.trim() || defaultGameName();
         const gameDate = document.getElementById("gameDate").value || todayForInput();
 
         const { data: createdGame, error: createError } = await supabase
@@ -9747,7 +9774,10 @@
           }
         });
 
-      document.getElementById("gameName").addEventListener("input", saveDraft);
+      document.getElementById("gameName").addEventListener("input", () => {
+        gameNameIsAuto = false;
+        saveDraft();
+      });
 
       document.getElementById("gameDate").addEventListener("change", saveDraft);
 
@@ -9912,6 +9942,7 @@ document
       });
 
       document.getElementById("gameDate").value = todayForInput();
+      document.getElementById("gameName").value = defaultGameName();
 
       {
         // An expired or already-used reset link comes back with an error.

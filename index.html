@@ -768,7 +768,7 @@
 
       .summary {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
         gap: 10px;
         margin: 16px 0 0;
       }
@@ -1756,8 +1756,8 @@
         }
 
         .summary {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 6px;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 8px;
         }
         .summary .stat {
           min-width: 0;
@@ -3606,6 +3606,68 @@
           white-space: nowrap;
         }
       }
+
+      /* Expenses: shared costs (food, drinks, venue) paid by one player and
+         split equally, so they feed the settlement without touching the pot. */
+      .expense-form-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 130px auto;
+        align-items: end;
+        gap: 10px;
+      }
+      .expense-form-grid > div { min-width: 0; }
+      .expense-list {
+        margin-top: 12px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--surface);
+      }
+      .expense-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .expense-row.view-only { grid-template-columns: minmax(0, 1fr) auto; }
+      .expense-row:last-child { border-bottom: 0; }
+      .expense-desc {
+        display: block;
+        overflow: hidden;
+        color: var(--ink);
+        font-size: 0.92rem;
+        font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .expense-sub {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+      .expense-amount {
+        font-variant-numeric: tabular-nums lining-nums;
+        font-weight: 700;
+        text-align: right;
+        white-space: nowrap;
+      }
+      .expense-footer {
+        padding: 10px 12px;
+        border-top: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--muted);
+        font-size: 0.8rem;
+        font-variant-numeric: tabular-nums lining-nums;
+      }
+      .history-expenses { margin-top: 14px; }
+      .history-expenses .expense-list { margin-top: 6px; }
+      @media (max-width: 640px) {
+        .expense-form-grid { grid-template-columns: 1fr; }
+        .expense-form-grid > button { width: 100%; }
+      }
 </style>
   </head>
 
@@ -3645,6 +3707,9 @@
               </button>
               <button type="button" class="banner-menu-item hidden" id="adminConsoleButton">
                 <span>Admin Console</span><span aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="banner-menu-item" id="changePasswordButton">
+                <span>Change password</span><span aria-hidden="true">→</span>
               </button>
               <button type="button" class="banner-menu-item banner-menu-signout" id="signOutButton">
                 <span>Sign out</span><span aria-hidden="true">↗</span>
@@ -3688,6 +3753,42 @@
         <p id="authMessage" class="empty">
           Sign in to create or join a poker group.
         </p>
+      </section>
+
+      <section class="card auth-card hidden" id="passwordCard">
+        <h2 id="passwordCardTitle">Set a new password</h2>
+        <p class="subtitle" id="passwordCardSubtitle">
+          Choose a new password for your account.
+        </p>
+
+        <div class="two-columns">
+          <div>
+            <label for="newPassword">New password</label>
+            <input
+              id="newPassword"
+              type="password"
+              autocomplete="new-password"
+              placeholder="At least 6 characters"
+            />
+          </div>
+
+          <div>
+            <label for="confirmPassword">Confirm new password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Re-enter the password"
+            />
+          </div>
+        </div>
+
+        <p class="field-error" id="passwordError" role="alert"></p>
+
+        <div class="actions auth-actions">
+          <button type="button" id="updatePasswordButton">Update password</button>
+          <button type="button" class="secondary hidden" id="cancelPasswordButton">Cancel</button>
+        </div>
       </section>
 
       <section class="hidden" id="dashboard">
@@ -3903,6 +4004,11 @@
                     <strong id="totalCashouts">$0.00</strong>
                   </div>
 
+                  <div class="stat">
+                    <span>Total expenses</span>
+                    <strong id="totalExpenses">$0.00</strong>
+                  </div>
+
                   <div class="stat stat-key">
                     <span>Difference</span>
                     <strong id="difference">$0.00</strong>
@@ -3910,6 +4016,55 @@
                 </div>
 
                 <div id="gameBalanceMessage"></div>
+              </div>
+
+              <div class="panel-section" id="expensesSection">
+                <div class="section-head">
+                  <h3>Expenses</h3>
+                  <span class="section-count" id="expenseCount"></span>
+                </div>
+
+                <p class="subtitle" id="expensesHelp">
+                  Money taken out of the pot, such as a cut from each round
+                  for food, drinks or cards. Cash-outs plus expenses must equal
+                  buy-ins, and the expenses show up as a payment to Expenses
+                  in the settlement.
+                </p>
+
+                <div id="expenseAddForm">
+                  <div class="expense-form-grid">
+                    <div>
+                      <label for="expenseDescription">Description</label>
+                      <input
+                        id="expenseDescription"
+                        type="text"
+                        maxlength="60"
+                        autocomplete="off"
+                        placeholder="Round 1"
+                      />
+                    </div>
+
+                    <div>
+                      <label for="expenseAmount">Amount ($)</label>
+                      <input
+                        id="expenseAmount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        inputmode="decimal"
+                        placeholder="$$"
+                      />
+                    </div>
+
+                    <button type="button" class="secondary" id="addExpenseButton">
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div id="expenseList">
+                  <p class="empty">No expenses recorded for this game.</p>
+                </div>
               </div>
 
               <div class="actions action-bar" id="gameActionBar">
@@ -4209,6 +4364,16 @@
       let expandedLeaderboardPlayerId = null;
       let draftDirty = false;
       let lastSavedAt = null;
+      // Money taken out of the pot for the open game: { id, description, amount }.
+      let gameExpenses = [];
+      let expenseSubscription = null;
+      let expensesUnavailable = false;
+      let addExpenseInFlight = false;
+      // "recovery" when the page was opened from a reset-password email,
+      // "change" when a signed-in person chose Change password, else null.
+      let passwordFlowMode = /(^|[#&])type=recovery/.test(window.location.hash)
+        ? "recovery"
+        : null;
       // Prevent duplicate commits when mobile focusout and the Save/check
       // button fire back-to-back for the same player.
       const savingPlayerEntries = new Set();
@@ -4822,17 +4987,26 @@
         const signedIn = Boolean(currentUser);
         document.getElementById("adminConsoleSection")?.classList.add("hidden");
 
+        const passwordOpen = signedIn && Boolean(passwordFlowMode);
+
         document
           .getElementById("authCard")
           .classList.toggle("hidden", signedIn);
 
         document
+          .getElementById("passwordCard")
+          .classList.toggle("hidden", !passwordOpen);
+
+        document
           .getElementById("dashboard")
-          .classList.toggle("hidden", !signedIn);
+          .classList.toggle("hidden", !signedIn || passwordOpen);
 
         document
           .getElementById("signedInBanner")
-          .classList.toggle("hidden", !signedIn);
+          .classList.toggle(
+            "hidden",
+            !signedIn || passwordFlowMode === "recovery",
+          );
 
         if (!signedIn) {
           document
@@ -4844,6 +5018,15 @@
       async function updateAuthUI() {
         const { data } = await supabase.auth.getSession();
         currentUser = data.session?.user ?? null;
+
+        if (!currentUser) passwordFlowMode = null;
+
+        // A reset link signs the person in so they can choose a new password.
+        // Keep the app hidden until they have.
+        if (passwordFlowMode === "recovery") {
+          showPasswordCard("recovery");
+          return;
+        }
 
         updateAuthLayout();
 
@@ -4927,6 +5110,7 @@
       }
 
       async function signOut() {
+        passwordFlowMode = null;
         await supabase.auth.signOut();
         localStorage.removeItem("poker-settle-selected-group");
         await updateAuthUI();
@@ -4953,6 +5137,88 @@
         }
 
         showToast(`Password reset email sent to ${email}.`, "success");
+      }
+
+      function showPasswordCard(mode) {
+        const card = document.getElementById("passwordCard");
+        const wasHidden = card.classList.contains("hidden");
+        const recovery = mode === "recovery";
+
+        passwordFlowMode = mode;
+
+        document.getElementById("passwordCardTitle").textContent = recovery
+          ? "Set a new password"
+          : "Change password";
+
+        document.getElementById("passwordCardSubtitle").textContent = recovery
+          ? "Your reset link worked. Choose a new password to finish signing in."
+          : "Choose a new password for your account.";
+
+        document
+          .getElementById("cancelPasswordButton")
+          .classList.toggle("hidden", recovery);
+
+        if (wasHidden) {
+          document.getElementById("newPassword").value = "";
+          document.getElementById("confirmPassword").value = "";
+          document.getElementById("passwordError").textContent = "";
+        }
+
+        document.getElementById("groupManagementCard")?.classList.add("hidden");
+        updateAuthLayout();
+
+        if (wasHidden) document.getElementById("newPassword").focus();
+      }
+
+      function hidePasswordCard() {
+        passwordFlowMode = null;
+        updateAuthLayout();
+      }
+
+      async function submitNewPassword() {
+        const password = document.getElementById("newPassword").value;
+        const confirmation = document.getElementById("confirmPassword").value;
+        const errorElement = document.getElementById("passwordError");
+        const button = document.getElementById("updatePasswordButton");
+
+        errorElement.textContent = "";
+
+        if (password.length < 6) {
+          errorElement.textContent = "Use at least 6 characters.";
+          return;
+        }
+
+        if (password !== confirmation) {
+          errorElement.textContent = "The two passwords do not match.";
+          return;
+        }
+
+        button.disabled = true;
+        const { error } = await supabase.auth.updateUser({ password });
+        button.disabled = false;
+
+        if (error) {
+          errorElement.textContent = error.message;
+          return;
+        }
+
+        const wasRecovery = passwordFlowMode === "recovery";
+
+        document.getElementById("newPassword").value = "";
+        document.getElementById("confirmPassword").value = "";
+
+        // Drop any leftover reset token from the address bar.
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + window.location.search,
+        );
+
+        hidePasswordCard();
+        showToast("Password updated.", "success");
+
+        // After a reset the app has not loaded yet, so load it now.
+        if (wasRecovery) await updateAuthUI();
       }
 
       async function loadGroupMemberships() {
@@ -6225,19 +6491,26 @@
       }
 
       function gameSettlementSignature() {
-        return JSON.stringify(
-          gameEntries
+        return JSON.stringify({
+          entries: gameEntries
             .map((entry) => ({
               playerId: entry.playerId,
               buyin: toNumber(entry.buyin),
               cashout: toNumber(entry.cashout),
             }))
             .sort((a, b) => String(a.playerId).localeCompare(String(b.playerId))),
-        );
+          expenses: gameExpenses
+            .map((expense) => ({
+              id: expense.id,
+              amount: Number(expense.amount),
+            }))
+            .sort((a, b) => String(a.id).localeCompare(String(b.id))),
+        });
       }
 
       function updateGameTotals() {
         updateBalanceDisplay();
+        renderExpenses();
 
         // Realtime save echoes can cause the same table data to be rendered
         // again immediately after Settle. Keep a valid settlement visible when
@@ -6261,13 +6534,18 @@
           0,
         );
 
+        // Cash-outs plus expenses should equal buy-ins.
         const difference =
-          Math.round((totalCashouts - totalBuyins) * 100) / 100;
+          Math.round((totalCashouts + totalExpenseAmount() - totalBuyins) * 100) / 100;
 
         document.getElementById("totalBuyins").textContent = money(totalBuyins);
 
         document.getElementById("totalCashouts").textContent =
           money(totalCashouts);
+
+        document.getElementById("totalExpenses").textContent = money(
+          totalExpenseAmount(),
+        );
 
         const differenceElement = document.getElementById("difference");
         const messageElement = document.getElementById("gameBalanceMessage");
@@ -6307,7 +6585,7 @@
 
           messageElement.innerHTML = `
           <div class="warning">
-            Cash-outs are <strong>${money(difference)}</strong>
+            Cash-outs plus expenses are <strong>${money(difference)}</strong>
             higher than buy-ins.
           </div>
         `;
@@ -6318,47 +6596,68 @@
 
         messageElement.innerHTML = `
         <div class="warning">
-          Cash-outs are <strong>${money(Math.abs(difference))}</strong>
+          Cash-outs plus expenses are <strong>${money(Math.abs(difference))}</strong>
           lower than buy-ins.
         </div>
       `;
       }
 
-      function calculatePayments() {
-        const totalBuyins = gameEntries.reduce(
+      // The settlement receiver that stands for money taken from the pot.
+      const EXPENSE_RECEIVER_ID = "__expenses__";
+
+      function totalExpenseAmount(expenses = gameExpenses) {
+        return (
+          expenses.reduce(
+            (sum, expense) =>
+              sum + Math.round(Number(expense.amount || 0) * 100),
+            0,
+          ) / 100
+        );
+      }
+
+      // Expenses come out of the pot, so cash-outs + expenses = buy-ins and the
+      // players' results add up to minus the expenses. That shortfall is owed to
+      // "Expenses", which is added as one more person to be paid.
+      function calculatePayments(entries = gameEntries, expenses = gameExpenses) {
+        const totalBuyins = entries.reduce(
           (sum, entry) => sum + toNumber(entry.buyin),
           0,
         );
 
-        const totalCashouts = gameEntries.reduce(
+        const totalCashouts = entries.reduce(
           (sum, entry) => sum + toNumber(entry.cashout),
           0,
         );
 
-        if (gameEntries.length < 2) return [];
-        if (Math.abs(totalBuyins - totalCashouts) > 0.01) return null;
+        const totalExpenses = totalExpenseAmount(expenses);
 
-        const creditors = gameEntries
-          .map((entry) => ({
-            ...entry,
-            balance:
-              Math.round(
-                (toNumber(entry.cashout) - toNumber(entry.buyin)) * 100,
-              ) / 100,
-          }))
-          .filter((entry) => entry.balance > 0.009)
-          .map((entry) => ({ ...entry }));
+        if (entries.length < 2) return [];
+        if (Math.abs(totalBuyins - totalCashouts - totalExpenses) > 0.01) {
+          return null;
+        }
 
-        const debtors = gameEntries
-          .map((entry) => ({
-            ...entry,
-            balance:
-              Math.round(
-                (toNumber(entry.buyin) - toNumber(entry.cashout)) * 100,
-              ) / 100,
-          }))
-          .filter((entry) => entry.balance > 0.009)
-          .map((entry) => ({ ...entry }));
+        const balances = entries.map((entry) => ({
+          ...entry,
+          cents:
+            Math.round(toNumber(entry.cashout) * 100) -
+            Math.round(toNumber(entry.buyin) * 100),
+        }));
+
+        const creditors = balances
+          .filter((entry) => entry.cents > 0)
+          .map((entry) => ({ ...entry, balance: entry.cents / 100 }));
+
+        const debtors = balances
+          .filter((entry) => entry.cents < 0)
+          .map((entry) => ({ ...entry, balance: -entry.cents / 100 }));
+
+        if (totalExpenses > 0) {
+          creditors.push({
+            playerId: EXPENSE_RECEIVER_ID,
+            name: "Expenses",
+            balance: totalExpenses,
+          });
+        }
 
         const payments = [];
         let debtorIndex = 0;
@@ -6534,6 +6833,10 @@
           supabase.removeChannel(groupGameSubscription);
           groupGameSubscription = null;
         }
+        if (expenseSubscription) {
+          supabase.removeChannel(expenseSubscription);
+          expenseSubscription = null;
+        }
 
         activeGameId = null;
         activeGameOwnerId = null;
@@ -6617,6 +6920,7 @@
 
       function resetGameForm() {
         gameEntries = [];
+        gameExpenses = [];
         currentGameId = null;
 
         document.getElementById("gameName").value = "Friday Night Poker";
@@ -6766,9 +7070,12 @@
           return null;
         }
 
-        if (closeGame && Math.abs(totalBuyins - totalCashouts) > 0.01) {
+        if (
+          closeGame &&
+          Math.abs(totalBuyins - totalCashouts - totalExpenseAmount()) > 0.01
+        ) {
           await noticeModal({
-            title: "Buy-ins and cash-outs must match before closing",
+            title: "Buy-ins must equal cash-outs plus expenses before closing",
             body: "Use Save game to keep this unfinished game as a draft, then close it once the totals line up.",
           });
           return null;
@@ -6892,8 +7199,14 @@
           return null;
         }
 
-        if (payments.length > 0) {
-          const settlementRows = payments.map((payment) => ({
+        // Payments to "Expenses" have no player to point at, so only
+        // player-to-player payments are stored. History rebuilds the rest.
+        const storedPayments = payments.filter(
+          (payment) => payment.receiverId !== EXPENSE_RECEIVER_ID,
+        );
+
+        if (storedPayments.length > 0) {
+          const settlementRows = storedPayments.map((payment) => ({
             game_id: gameId,
             payer_player_id: payment.payerId,
             receiver_player_id: payment.receiverId,
@@ -6994,6 +7307,14 @@
         }
 
         historyGames = data || [];
+
+        const expenseMap = await fetchExpensesForGames(
+          historyGames.map((game) => game.id),
+        );
+        historyGames.forEach((game) => {
+          game.expenses = expenseMap.get(game.id) || [];
+        });
+
         populateHistoryPlayerFilter(historyGames);
         applyHistoryFilters();
       }
@@ -7124,6 +7445,33 @@
         document.getElementById("historyDateFilter").value = "all";
         historyPage = 1;
         applyHistoryFilters(true);
+      }
+
+      function renderHistoryExpenses(game) {
+        const expenses = game.expenses || [];
+
+        if (!expenses.length) return "";
+
+        const total = totalExpenseAmount(expenses);
+
+        return `
+          <div class="history-expenses">
+            <span class="history-figure-label">
+              Expenses · ${money(total)} taken from the pot
+            </span>
+            <div class="expense-list">
+              ${expenses
+                .map(
+                  (expense) => `
+              <div class="expense-row view-only">
+                <span class="expense-desc">${escapeHtml(expense.description)}</span>
+                <span class="expense-amount">${money(expense.amount)}</span>
+              </div>`,
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
       }
 
       function renderHistory(games, totalFiltered = games.length, totalPages = 1) {
@@ -7259,6 +7607,8 @@
               </div>
 
               ${playerRows}
+
+              ${renderHistoryExpenses(game)}
 
               <div class="history-settlement-actions">
                 <button
@@ -7734,7 +8084,12 @@
           ]),
         );
 
-        let text = (game.settlements || [])
+        // Games with expenses include payments to "Expenses", which are not
+        // stored, so those are rebuilt from the saved amounts below.
+        const expenseMap = await fetchExpensesForGames([gameId]);
+        const gameExpenseList = expenseMap.get(gameId) || [];
+
+        let text = (gameExpenseList.length > 0 ? [] : game.settlements || [])
           .map(
             (payment) => ({
               payerName:
@@ -7763,10 +8118,10 @@
             cashout: Number(entry.cashout || 0),
           }));
 
-          const originalEntries = gameEntries;
-          gameEntries = reconstructedEntries;
-          const payments = calculatePayments();
-          gameEntries = originalEntries;
+          const payments = calculatePayments(
+            reconstructedEntries,
+            gameExpenseList,
+          );
 
           if (payments === null) {
             showToast(
@@ -8072,6 +8427,221 @@
         await saveGame(false);
       }
 
+      function normalizeExpense(row) {
+        return {
+          id: row.id,
+          description: row.description || "Expense",
+          amount: Number(row.amount || 0),
+        };
+      }
+
+      // Used by history. If the expenses table is missing or unreadable, games
+      // still load; they just show without expenses.
+      async function fetchExpensesForGames(gameIds) {
+        const byGame = new Map();
+
+        if (!gameIds.length) return byGame;
+
+        const { data, error } = await supabase
+          .from("game_expenses")
+          .select("id, game_id, description, amount, created_at")
+          .in("game_id", gameIds)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.warn("Could not load expenses:", error.message);
+          return byGame;
+        }
+
+        (data || []).forEach((row) => {
+          const list = byGame.get(row.game_id) || [];
+          list.push(normalizeExpense(row));
+          byGame.set(row.game_id, list);
+        });
+
+        return byGame;
+      }
+
+      async function loadExpenses(gameId) {
+        const { data, error } = await supabase
+          .from("game_expenses")
+          .select("id, game_id, description, amount, created_at")
+          .eq("game_id", gameId)
+          .order("created_at", { ascending: true });
+
+        // The game may have changed while this request was in flight.
+        if (activeGameId !== gameId) return;
+
+        if (error) {
+          console.warn("Could not load expenses:", error.message);
+          expensesUnavailable = true;
+          gameExpenses = [];
+        } else {
+          expensesUnavailable = false;
+          gameExpenses = (data || []).map(normalizeExpense);
+        }
+
+        updateGameTotals();
+      }
+
+      function renderExpenses() {
+        const list = document.getElementById("expenseList");
+
+        if (!list) return;
+
+        const editable = canEditActiveGame();
+
+        // Suggest the next round as the description.
+        const descriptionInput = document.getElementById("expenseDescription");
+
+        if (descriptionInput) {
+          descriptionInput.placeholder = `Round ${gameExpenses.length + 1}`;
+        }
+
+        const count = document.getElementById("expenseCount");
+
+        if (count) {
+          count.textContent = gameExpenses.length
+            ? `${gameExpenses.length} ${
+                gameExpenses.length === 1 ? "expense" : "expenses"
+              }`
+            : "";
+        }
+
+        if (expensesUnavailable) {
+          list.innerHTML = `<p class="empty">Expenses are not set up in the database yet. Run the expenses SQL, then reload.</p>`;
+          return;
+        }
+
+        if (gameExpenses.length === 0) {
+          list.innerHTML = `<p class="empty">No expenses recorded for this game.</p>`;
+          return;
+        }
+
+        list.innerHTML = `
+          <div class="expense-list">
+            ${gameExpenses
+              .map(
+                (expense) => `
+            <div class="expense-row${editable ? "" : " view-only"}">
+              <span class="expense-desc">${escapeHtml(expense.description)}</span>
+
+              <span class="expense-amount">${money(expense.amount)}</span>
+
+              ${
+                editable
+                  ? `<button
+                      type="button"
+                      class="compact-icon-button remove-icon"
+                      title="Remove expense"
+                      aria-label="Remove expense ${escapeHtml(expense.description)}"
+                      data-remove-expense="${expense.id}"
+                    >${ICON_TRASH}</button>`
+                  : ""
+              }
+            </div>`,
+              )
+              .join("")}
+
+            <div class="expense-footer">
+              Total ${money(totalExpenseAmount())} taken from the pot
+            </div>
+          </div>
+        `;
+      }
+
+      async function addExpense() {
+        if (addExpenseInFlight || !canEditActiveGame()) return;
+
+        const descriptionInput = document.getElementById("expenseDescription");
+        const amountInput = document.getElementById("expenseAmount");
+
+        const description =
+          descriptionInput.value.trim() || `Round ${gameExpenses.length + 1}`;
+        const amount = Math.round(Number.parseFloat(amountInput.value) * 100) / 100;
+
+        if (!Number.isFinite(amount) || amount <= 0) {
+          showToast("Enter an expense amount greater than $0.", "warning");
+          amountInput.focus();
+          return;
+        }
+
+        addExpenseInFlight = true;
+        document.getElementById("addExpenseButton").disabled = true;
+
+        try {
+          let gameId = currentGameId || activeGameId;
+
+          if (!gameId) {
+            gameId = await saveGame(false);
+            if (!gameId) return;
+          }
+
+          const { error } = await supabase.from("game_expenses").insert({
+            game_id: gameId,
+            description,
+            amount,
+          });
+
+          if (error) {
+            console.error(error);
+
+            const missingTable =
+              error.code === "42P01" ||
+              error.code === "PGRST205" ||
+              /game_expenses/i.test(error.message || "");
+
+            showToast(
+              missingTable
+                ? "Expenses are not set up in the database yet. Run the expenses SQL first."
+                : `Could not add expense: ${error.message}`,
+              "error",
+            );
+            return;
+          }
+
+          descriptionInput.value = "";
+          amountInput.value = "";
+          amountInput.focus();
+
+          await loadExpenses(gameId);
+          showToast("Expense added.", "success");
+        } finally {
+          addExpenseInFlight = false;
+          document.getElementById("addExpenseButton").disabled = false;
+        }
+      }
+
+      async function removeExpense(expenseId) {
+        if (!canEditActiveGame()) return;
+
+        const expense = gameExpenses.find((item) => item.id === expenseId);
+
+        if (!expense) return;
+
+        const confirmed = await confirmModal({
+          title: `Remove "${expense.description}" (${money(expense.amount)})?`,
+          body: "Cash-outs plus the remaining expenses must still equal buy-ins.",
+          confirmLabel: "Remove expense",
+          tone: "danger",
+        });
+
+        if (!confirmed) return;
+
+        const { error } = await supabase
+          .from("game_expenses")
+          .delete()
+          .eq("id", expenseId);
+
+        if (error) {
+          console.error(error);
+          showToast(`Could not remove expense: ${error.message}`, "error");
+          return;
+        }
+
+        await loadExpenses(currentGameId || activeGameId);
+      }
+
       async function loadActiveGame(gameId) {
         const { data: game, error: gameError } = await supabase
           .from("games")
@@ -8127,6 +8697,7 @@
         currentGameId = canEditActiveGame() ? game.id : null;
 
         await loadBuyinTransactions(gameId);
+        await loadExpenses(gameId);
         renderGameEntries();
         renderGamePlayerOptions();
         updateGameTotals();
@@ -8189,6 +8760,9 @@
         toggleHidden("saveStatus", !editable);
         toggleHidden("takeoverGameButton", !canTakeOverActiveGame());
         toggleHidden("addPlayerArea", !editable);
+        toggleHidden("expenseAddForm", !editable);
+        toggleHidden("expensesHelp", !editable);
+        renderExpenses();
         toggleHidden("applyDefaultBuyinButton", !editable);
         toggleHidden("calculateButton", !editable);
         toggleHidden("closeGameButton", !editable);
@@ -8302,6 +8876,28 @@
         if (gameSubscription) {
           supabase.removeChannel(gameSubscription);
         }
+
+        // Expenses use their own channel so a missing table can never break
+        // live updates for buy-ins and cash-outs.
+        if (expenseSubscription) {
+          supabase.removeChannel(expenseSubscription);
+        }
+
+        expenseSubscription = supabase
+          .channel(`poker-vault-expenses-${gameId}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "game_expenses",
+              filter: `game_id=eq.${gameId}`,
+            },
+            async () => {
+              await loadExpenses(gameId);
+            },
+          )
+          .subscribe();
 
         gameSubscription = supabase
           .channel(`poker-vault-game-${gameId}`)
@@ -8594,6 +9190,29 @@
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") closeBannerMenu();
+      });
+
+      document
+        .getElementById("changePasswordButton")
+        .addEventListener("click", () => {
+          closeBannerMenu();
+          if (currentUser) showPasswordCard("change");
+        });
+
+      document
+        .getElementById("updatePasswordButton")
+        .addEventListener("click", submitNewPassword);
+
+      document
+        .getElementById("cancelPasswordButton")
+        .addEventListener("click", hidePasswordCard);
+
+      ["newPassword", "confirmPassword"].forEach((id) => {
+        document.getElementById(id).addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          submitNewPassword();
+        });
       });
 
       document.getElementById("signOutButton").addEventListener("click", async () => {
@@ -9255,11 +9874,62 @@ document
           arrow.textContent = isHidden ? "Hide" : "Show";
         });
 
-      supabase.auth.onAuthStateChange(() => {
+      document
+        .getElementById("addExpenseButton")
+        .addEventListener("click", addExpense);
+
+      ["expenseDescription", "expenseAmount"].forEach((id) => {
+        document.getElementById(id).addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          addExpense();
+        });
+      });
+
+      document
+        .getElementById("expenseList")
+        .addEventListener("click", async (event) => {
+          const button = event.target.closest("[data-remove-expense]");
+
+          if (!button) return;
+
+          await removeExpense(button.dataset.removeExpense);
+        });
+
+      supabase.auth.onAuthStateChange((event) => {
+        // Opening the reset link from an email fires this event.
+        if (event === "PASSWORD_RECOVERY") {
+          passwordFlowMode = "recovery";
+          updateAuthUI();
+          return;
+        }
+
+        // While the password form is open, ignore background refreshes so
+        // they cannot reload the app underneath it.
+        if (passwordFlowMode && event !== "SIGNED_OUT") return;
+
         updateAuthUI();
       });
 
       document.getElementById("gameDate").value = todayForInput();
+
+      {
+        // An expired or already-used reset link comes back with an error.
+        const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const authError = params.get("error_description");
+
+        if (authError) {
+          showToast(
+            `${authError}. Use Forgot password to get a new link.`,
+            "error",
+          );
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname + window.location.search,
+          );
+        }
+      }
 
       updateAuthUI();
       renderGameEntries();

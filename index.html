@@ -4239,6 +4239,7 @@
                 <button class="ghost" id="clearHistoryFiltersButton">Clear</button>
               </div>
               <p class="history-filter-count" id="historyFilterCount"></p>
+              <p class="history-filter-count" id="historyLoadNote" hidden></p>
             </div>
             <div id="gameHistory">
               <p class="empty">Select a group to view completed games.</p>
@@ -7424,15 +7425,11 @@
         return gameId;
       }
 
-      async function loadHistory() {
-        if (!selectedGroupId) {
-          historyGames = [];
-          populateHistoryPlayerFilter([]);
-          renderHistory([]);
-          renderGroupExpenses([]);
-          return;
-        }
+      const HISTORY_FIRST_BATCH = 30;
+      const HISTORY_NEXT_BATCH = 100;
+      let historyLoadToken = 0;
 
+      async function fetchHistoryBatch(groupId, from, to) {
         const { data, error } = await supabase
           .from("games")
           .select(
@@ -7456,30 +7453,82 @@
           )
         `,
           )
-          .eq("group_id", selectedGroupId)
+          .eq("group_id", groupId)
           .eq("status", "completed")
           .order("played_at", { ascending: false })
-          .limit(30);
+          .order("id", { ascending: false })
+          .range(from, to);
 
-        if (error) {
-          console.error(error);
+        if (error) return { games: [], error };
+
+        const games = data || [];
+        const expenseMap = await fetchExpensesForGames(games.map((game) => game.id));
+        games.forEach((game) => {
+          game.expenses = expenseMap.get(game.id) || [];
+        });
+        return { games, error: null };
+      }
+
+      function setHistoryLoadNote(text) {
+        const note = document.getElementById("historyLoadNote");
+        if (!note) return;
+        note.textContent = text;
+        note.hidden = !text;
+      }
+
+      async function loadHistory() {
+        const token = ++historyLoadToken;
+
+        if (!selectedGroupId) {
+          historyGames = [];
+          setHistoryLoadNote("");
+          populateHistoryPlayerFilter([]);
+          renderHistory([]);
+          renderGroupExpenses([]);
+          return;
+        }
+
+        const groupId = selectedGroupId;
+
+        // First batch is small so the tab opens quickly.
+        const first = await fetchHistoryBatch(groupId, 0, HISTORY_FIRST_BATCH - 1);
+        if (token !== historyLoadToken) return;
+
+        if (first.error) {
+          console.error(first.error);
           document.getElementById("gameHistory").innerHTML = `
           <p class="empty">Could not load group game history.</p>
         `;
           return;
         }
 
-        historyGames = data || [];
-
-        const expenseMap = await fetchExpensesForGames(
-          historyGames.map((game) => game.id),
-        );
-        historyGames.forEach((game) => {
-          game.expenses = expenseMap.get(game.id) || [];
-        });
-
+        historyGames = first.games;
         populateHistoryPlayerFilter(historyGames);
         applyHistoryFilters();
+
+        // Older games load quietly in the background, one batch at a time.
+        let offset = first.games.length;
+        let more = first.games.length === HISTORY_FIRST_BATCH;
+
+        while (more) {
+          setHistoryLoadNote(`Loading older games… ${historyGames.length} loaded`);
+          const batch = await fetchHistoryBatch(groupId, offset, offset + HISTORY_NEXT_BATCH - 1);
+          if (token !== historyLoadToken) return;
+
+          if (batch.error) {
+            console.error(batch.error);
+            setHistoryLoadNote(`Showing ${historyGames.length} games. Could not load older games.`);
+            return;
+          }
+
+          historyGames = historyGames.concat(batch.games);
+          offset += batch.games.length;
+          more = batch.games.length === HISTORY_NEXT_BATCH;
+          populateHistoryPlayerFilter(historyGames);
+          applyHistoryFilters(false);
+        }
+
+        setHistoryLoadNote("");
       }
 
       let historyGames = [];
@@ -7854,6 +7903,11 @@
                 >
                   Copy settlement
                 </button>
+                ${
+                  isSuperAdmin()
+                    ? `<button type="button" class="secondary small" style="color: #a23a29; border-color: #a23a29" data-delete-history-game="${game.id}">Delete game</button>`
+                    : ""
+                }
               </div>
 
               <p class="history-settlement-note">
@@ -8271,6 +8325,56 @@
           console.warn("Clipboard fallback failed:", error);
           return false;
         }
+      }
+
+      async function deleteHistoryGame(gameId) {
+        if (!isSuperAdmin()) {
+          showToast("Only a Super Admin can delete games.", "error");
+          return;
+        }
+
+        const game = historyGames.find((item) => item.id === gameId);
+        const confirmed = await confirmModal({
+          title: `Delete "${game?.name || "this game"}" permanently?`,
+          body: "This removes the game, its players' buy-ins and cash-outs, expenses, and saved settlement. Leaderboard and trends will update. This cannot be undone.",
+          confirmLabel: "Delete game",
+          tone: "danger",
+        });
+
+        if (!confirmed) return;
+
+        let { error } = await supabase.rpc("super_admin_delete_game", {
+          p_game_id: gameId,
+        });
+
+        if (
+          error &&
+          /could not find the function|PGRST202/i.test(`${error.code} ${error.message}`)
+        ) {
+          // Function not installed yet: try a direct delete (depends on RLS).
+          const result = await supabase
+            .from("games")
+            .delete()
+            .eq("id", gameId)
+            .select("id");
+          error = result.error;
+          if (!error && !(result.data || []).length) {
+            error = {
+              message:
+                "Not allowed. Install the super_admin_delete_game SQL function in Supabase.",
+            };
+          }
+        }
+
+        if (error) {
+          console.error(error);
+          showToast(`Could not delete game: ${error.message}`, "error");
+          return;
+        }
+
+        showToast("Game deleted.", "success");
+        await loadHistory();
+        await loadLeaderboard();
       }
 
       async function copyHistorySettlement(gameId) {
@@ -10095,6 +10199,15 @@ document
           const copyButton = event.target.closest(
             "[data-copy-history-settlement]",
           );
+
+          const deleteButton = event.target.closest(
+            "[data-delete-history-game]",
+          );
+
+          if (deleteButton) {
+            await deleteHistoryGame(deleteButton.dataset.deleteHistoryGame);
+            return;
+          }
 
           if (copyButton) {
             await copyHistorySettlement(

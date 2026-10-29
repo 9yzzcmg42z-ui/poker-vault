@@ -3662,12 +3662,86 @@
         font-size: 0.8rem;
         font-variant-numeric: tabular-nums lining-nums;
       }
+      #groupExpensesCard { margin-top: 16px; }
+      .group-expenses-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 22px;
+        margin: 4px 0 0;
+        color: var(--ink-soft);
+        font-size: 0.86rem;
+        font-variant-numeric: tabular-nums lining-nums;
+      }
+      .group-expenses-summary strong { color: var(--ink); }
       .history-expenses { margin-top: 14px; }
       .history-expenses .expense-list { margin-top: 6px; }
       @media (max-width: 640px) {
         .expense-form-grid { grid-template-columns: 1fr; }
         .expense-form-grid > button { width: 100%; }
       }
+
+      /* ---- Phone-first layout ---- */
+      .tab-icon { display: none; }
+      .seg { display: flex; gap: 4px; margin: 14px 0 4px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 12px; background: rgba(35, 34, 30, 0.045); }
+      .seg button { flex: 1; background: transparent; color: var(--ink-soft); border-color: transparent; box-shadow: none; }
+      .seg button:hover { background: rgba(255, 255, 255, 0.6); color: var(--green); }
+      .seg button.active, .seg button.active:hover { background: var(--surface); color: var(--green); border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
+      #historyPanel[data-view="games"] #groupExpensesCard,
+      #historyPanel[data-view="expenses"] #gameHistory,
+      #historyPanel[data-view="expenses"] #historyFilterCount { display: none; }
+      #historyPanel[data-view="expenses"] #groupExpensesCard { margin-top: 0; padding-top: 0; border: 0; box-shadow: none; background: transparent; }
+      #expensesSection.collapsed #expenseAddForm,
+      #expensesSection.collapsed #expenseList { display: none; }
+      @media (max-width: 640px) {
+        .app-shell { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+        #dashboard .workspace-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex !important; width: 100%; max-width: none; margin: 0; padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)); gap: 4px; border: 0; border-top: 1px solid var(--line-strong); border-radius: 0; background: var(--surface); box-shadow: 0 -4px 16px rgba(35, 34, 30, 0.08); overflow: visible; }
+        #dashboard .workspace-nav .workspace-tab { flex: 1 1 0; display: flex !important; flex-direction: column; align-items: center; gap: 2px; width: auto; min-width: 0; grid-column: auto; padding: 6px 4px; font-size: 0.72rem; white-space: nowrap; }
+        #dashboard .workspace-nav .workspace-tab.hidden,
+        #dashboard .workspace-nav .workspace-tab[hidden] { display: none !important; }
+        #dashboard .workspace-nav .workspace-tab.active, #dashboard .workspace-nav .workspace-tab.active:hover { border-color: transparent; background: var(--green-soft); box-shadow: none; }
+        .tab-icon { display: inline-flex; }
+        #gameSubtitle { display: none; }
+        #hostDraftNotice { padding: 8px 10px; font-size: 0.78rem; }
+        #gameActionBar { position: sticky; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); z-index: 40; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; margin-top: 14px; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-md); }
+        #gameActionBar button { width: 100%; padding-left: 8px; padding-right: 8px; }
+      }
+
+      /* ---- Tournament payouts ---- */
+      #tournamentSection.hidden { display: none; }
+      .tournament-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) 62px 72px; gap: 8px; align-items: center; padding: 8px 2px; border-bottom: 1px solid var(--line); }
+      .tournament-row:last-child { border-bottom: 0; }
+      .tournament-row .t-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; }
+      .tournament-row select { padding: 6px 8px; }
+      .tournament-row .t-pay { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums lining-nums; }
+      #tournamentPlayers { margin-top: 12px; }
+
+      /* ---- Leaderboard trends ---- */
+      #leaderboardTrendsCard:has(#leaderboardTrends:empty) { display: none; }
+      .trend-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+      .trend-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); color: var(--ink-soft); font-size: 0.8rem; font-weight: 600; box-shadow: none; }
+      .trend-chip i { width: 10px; height: 10px; border-radius: 50%; background: var(--c); opacity: 0.35; }
+      .trend-chip.on { color: var(--ink); border-color: var(--c); }
+      .trend-chip.on i { opacity: 1; }
+      .trend-chip em { font-style: normal; font-variant-numeric: tabular-nums lining-nums; color: var(--ink-soft); font-weight: 500; }
+      .trend-chart { width: 100%; height: auto; display: block; color: var(--ink-soft); overflow: visible; }
+
+      /* ---- Highlights, trend modes, profile ---- */
+      #leaderboardHighlightsCard:has(#leaderboardHighlights:empty) { display: none; }
+      .highlight-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 12px; }
+      @media (min-width: 720px) { .highlight-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      .highlight-card { padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+      .highlight-card span { display: block; color: var(--ink-soft); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+      .highlight-card strong { display: block; margin-top: 4px; font-size: 1.05rem; font-variant-numeric: tabular-nums lining-nums; }
+      .highlight-card small { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 0.8rem; }
+      .trend-modes { margin: 10px 0 0; }
+      .profile-overlay { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; justify-content: center; background: rgba(35, 34, 30, 0.45); }
+      .profile-overlay[hidden] { display: none; }
+      .profile-sheet { width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto; padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px)); border-radius: 18px 18px 0 0; background: var(--surface); }
+      @media (min-width: 720px) { .profile-overlay { align-items: center; } .profile-sheet { border-radius: 18px; } }
+      .profile-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+      @media (min-width: 560px) { .profile-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      .profile-recent { margin-top: 14px; }
+      .profile-recent .lb-session { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.86rem; }
 </style>
   </head>
 
@@ -3794,17 +3868,17 @@
       <section class="hidden" id="dashboard">
         <nav class="workspace-nav">
           <button class="workspace-tab active" data-panel="gamePanel">
-            Game
+            <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5"/></svg></span><span>Game</span>
           </button>
           <button class="workspace-tab hidden" id="manageGroupsTab" data-panel="groupManagementCard">
             Manage Groups
           </button>
           <button class="workspace-tab hidden" data-panel="historyPanel" hidden>
-            History
+            <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg></span><span>History</span>
           </button>
 
           <button class="workspace-tab hidden" data-panel="leaderboardPanel" hidden>
-            Leaderboard
+            <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></span><span>Leaderboard</span>
           </button>
         </nav>
 
@@ -3958,6 +4032,14 @@
                       </div>
                     </div>
                   </div>
+
+                  <div style="margin-top: 14px">
+                    <label>Game format</label>
+                    <div class="seg" role="group" aria-label="Game format" style="margin-top: 6px">
+                      <button type="button" class="active" data-game-format="cash" aria-pressed="true">Cash game</button>
+                      <button type="button" data-game-format="tournament" aria-pressed="false">Tournament</button>
+                    </div>
+                  </div>
                 </div>
               <!-- <div id="addPlayerArea" style="margin-top: 14px;">
             <label for="gamePlayerSearch">Find and add player</label>
@@ -4022,6 +4104,7 @@
                 <div class="section-head">
                   <h3>Expenses</h3>
                   <span class="section-count" id="expenseCount"></span>
+                  <button type="button" class="secondary small" id="toggleExpensesButton" aria-expanded="true">Hide</button>
                 </div>               
 
                 <div id="expenseAddForm">
@@ -4061,6 +4144,30 @@
                 </div>
               </div>
 
+              <div class="panel-section hidden" id="tournamentSection">
+                <div class="section-head">
+                  <h3>Tournament payouts</h3>
+                  <span class="section-count" id="tournamentPool"></span>
+                </div>
+                <label for="payoutStructure">Payout structure</label>
+                <select id="payoutStructure">
+                  <option value="100">Winner takes all</option>
+                  <option value="65,35">Top 2 (65 / 35)</option>
+                  <option value="50,30,20" selected>Top 3 (50 / 30 / 20)</option>
+                  <option value="40,30,20,10">Top 4 (40 / 30 / 20 / 10)</option>
+                  <option value="custom">Custom…</option>
+                </select>
+                <div id="customPayoutWrap" class="hidden" style="margin-top: 10px">
+                  <label for="customPayout">Percentages</label>
+                  <input id="customPayout" type="text" value="50, 30, 20" placeholder="50, 30, 20" autocomplete="off" />
+                </div>
+                <div id="tournamentPlayers"></div>
+                <p class="save-status" id="tournamentStatus" aria-live="polite"></p>
+                <button type="button" class="secondary small" id="applyPayoutsButton">
+                  Recalculate payouts
+                </button>
+              </div>
+
               <div class="actions action-bar" id="gameActionBar">
                 <button class="secondary small hidden" id="takeoverGameButton" type="button">Takeover</button>
                 <button class="secondary" id="calculateButton">Settle</button>
@@ -4087,7 +4194,7 @@
             </div>
           </div>
         </section>
-        <section class="workspace-panel" id="historyPanel" hidden>
+        <section class="workspace-panel" id="historyPanel" data-view="games" hidden>
           <div class="card">
             <div class="panel-title-row">
               <div>
@@ -4101,6 +4208,11 @@
               <span class="group-chip" id="historyGroupChip">
                 No group selected
               </span>
+            </div>
+
+            <div class="seg" role="group" aria-label="History view">
+              <button type="button" class="active" data-history-view="games" aria-pressed="true">Games</button>
+              <button type="button" data-history-view="expenses" aria-pressed="false">Expenses</button>
             </div>
 
             <div class="history-filters" id="historyFilters">
@@ -4130,6 +4242,22 @@
             </div>
             <div id="gameHistory">
               <p class="empty">Select a group to view completed games.</p>
+            </div>
+          </div>
+
+          <div class="card" id="groupExpensesCard">
+            <div class="panel-title-row">
+              <div>
+                <h2>Group expenses</h2>
+                <p class="subtitle">
+                  Every expense recorded across completed games. Follows the
+                  filters above.
+                </p>
+              </div>
+              <span class="section-count" id="groupExpensesCount"></span>
+            </div>
+            <div id="groupExpensesList">
+              <p class="empty">Select a group to view expenses.</p>
             </div>
           </div>
         </section>
@@ -4184,6 +4312,14 @@
             <div id="leaderboard">
               <p class="empty">Select a group to view player rankings.</p>
             </div>
+          </div>
+
+          <div class="card" id="leaderboardHighlightsCard" style="margin-top: 16px">
+            <div id="leaderboardHighlights"></div>
+          </div>
+
+          <div class="card" id="leaderboardTrendsCard" style="margin-top: 16px">
+            <div id="leaderboardTrends"></div>
           </div>
         </section>
       </section>
@@ -4348,6 +4484,11 @@
       let activeGameId = null;
       let activeGameOwnerId = null;
       let activeGameName = "";
+      let tournamentNameSuffix = false;
+      const TREND_COLORS = ["#2e6b4a", "#c2573a", "#3b6fb6", "#b8892b", "#7a4fa3", "#2a8a8a", "#a33c66", "#6b7a2e"];
+      let trendPlayers = [];
+      let trendSelected = null;
+      let trendMode = "cumulative";
       let activeGameStatus = "draft";
       let noLiveGameReason = null;
       let gameSubscription = null;
@@ -4751,7 +4892,7 @@
                 ? "Evening"
                 : "Night";
 
-        return `${weekday} ${period}`;
+        return `${weekday} ${period}${tournamentNameSuffix ? " Tournament" : ""}`;
       }
 
       function todayForInput() {
@@ -7288,6 +7429,7 @@
           historyGames = [];
           populateHistoryPlayerFilter([]);
           renderHistory([]);
+          renderGroupExpenses([]);
           return;
         }
 
@@ -7457,6 +7599,7 @@
         }
 
         renderHistory(visibleGames, filtered.length, totalPages);
+        renderGroupExpenses(filtered);
       }
 
 
@@ -7466,6 +7609,78 @@
         document.getElementById("historyDateFilter").value = "all";
         historyPage = 1;
         applyHistoryFilters(true);
+      }
+
+      function renderGroupExpenses(games) {
+        const list = document.getElementById("groupExpensesList");
+        const count = document.getElementById("groupExpensesCount");
+        if (!list) return;
+
+        if (!selectedGroupId) {
+          if (count) count.textContent = "";
+          list.innerHTML = `<p class="empty">Select a group to view expenses.</p>`;
+          return;
+        }
+
+        const rows = [];
+        (games || []).forEach((game) => {
+          (game.expenses || []).forEach((expense) => {
+            rows.push({ game, expense });
+          });
+        });
+
+        if (count) {
+          count.textContent = rows.length
+            ? `${rows.length} ${rows.length === 1 ? "expense" : "expenses"}`
+            : "";
+        }
+
+        if (!rows.length) {
+          list.innerHTML = `<p class="empty">No expenses recorded in these games.</p>`;
+          return;
+        }
+
+        // Newest expense first, by when it was actually added.
+        rows.sort(
+          (a, b) =>
+            new Date(b.expense.createdAt || b.game.played_at) -
+            new Date(a.expense.createdAt || a.game.played_at),
+        );
+
+        const total = totalExpenseAmount(rows.map((row) => row.expense));
+        const gamesWithExpenses = new Set(rows.map((row) => row.game.id)).size;
+
+        list.innerHTML = `
+          <p class="group-expenses-summary">
+            <span>Total <strong>${money(total)}</strong></span>
+            <span>Across <strong>${gamesWithExpenses}</strong> ${
+              gamesWithExpenses === 1 ? "game" : "games"
+            }</span>
+          </p>
+          <div class="expense-list">
+            ${rows
+              .map(({ game, expense }) => {
+                const added = new Date(expense.createdAt || game.played_at);
+                const date = Number.isNaN(added.getTime())
+                  ? ""
+                  : added.toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    });
+                return `
+            <div class="expense-row view-only">
+              <span>
+                <span class="expense-desc">${escapeHtml(expense.description)}</span>
+                <span class="expense-sub">${escapeHtml(game.name || "Game")}${date ? ` · Added ${escapeHtml(date)}` : ""}</span>
+              </span>
+              <span class="expense-amount">${money(expense.amount)}</span>
+            </div>`;
+              })
+              .join("")}
+            <div class="expense-footer">Total ${money(total)}</div>
+          </div>
+        `;
       }
 
       function renderHistoryExpenses(game) {
@@ -7864,6 +8079,7 @@
 
         return `
           <div class="lb-details" data-lb-details="${escapeHtml(player.player_id)}">
+            <button type="button" class="secondary small lb-profile-btn" data-open-profile="${escapeHtml(player.player_id)}" style="margin-bottom: 10px">View full profile →</button>
             <div class="lb-details-header">
               <span>Date</span>
               <span>Buy-in</span>
@@ -7893,6 +8109,7 @@
       }
 
       function renderLeaderboard(players) {
+        renderLeaderboardTrends(players);
         document.querySelector("#leaderboardPanel .subtitle").textContent =
           `Net-profit rankings for ${leaderboardPeriodLabel()} in the selected group.`;
         const container = document.getElementById("leaderboard");
@@ -8453,6 +8670,7 @@
           id: row.id,
           description: row.description || "Expense",
           amount: Number(row.amount || 0),
+          createdAt: row.created_at || null,
         };
       }
 
@@ -10080,6 +10298,448 @@ document
         adminSection.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
+
+      // Phone-first UI: History view switch and collapsible Expenses section.
+      document.querySelectorAll("[data-history-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("historyPanel").dataset.view = button.dataset.historyView;
+          document.querySelectorAll("[data-history-view]").forEach((other) => {
+            const on = other === button;
+            other.classList.toggle("active", on);
+            other.setAttribute("aria-pressed", String(on));
+          });
+        });
+      });
+
+      {
+        const section = document.getElementById("expensesSection");
+        const toggle = document.getElementById("toggleExpensesButton");
+        const setCollapsed = (collapsed) => {
+          section.classList.toggle("collapsed", collapsed);
+          toggle.textContent = collapsed ? "Show" : "Hide";
+          toggle.setAttribute("aria-expanded", String(!collapsed));
+        };
+        setCollapsed(window.matchMedia("(max-width: 640px)").matches);
+        toggle.addEventListener("click", () =>
+          setCollapsed(!section.classList.contains("collapsed")),
+        );
+      }
+
+      // Tournament format: tap Out as players bust. Finishing places come from
+      // the knock-out order (last one standing is 1st); the prize pool
+      // (buy-ins minus expenses) is split by the payout structure and filled
+      // into the cash-outs. State resets whenever a different game is opened.
+      {
+        const $ = (id) => document.getElementById(id);
+        const round2 = (n) => Math.round(n * 100) / 100;
+        const DEFAULT_STRUCTURE = "50,30,20";
+        const ordinal = (n) => `${n}${["st", "nd", "rd"][n - 1] || "th"}`;
+        let format = "cash";
+        let outOrder = [];
+        let lastGameId = undefined;
+
+        const pcts = () => {
+          const raw = $("payoutStructure").value === "custom"
+            ? $("customPayout").value.split(/[\s,\/]+/)
+            : $("payoutStructure").value.split(",");
+          const list = raw.map(Number).filter((n) => Number.isFinite(n) && n > 0);
+          const sum = list.reduce((a, b) => a + b, 0);
+          return sum > 0 ? list.map((n) => (n / sum) * 100) : [];
+        };
+
+        const pool = () =>
+          round2(gameEntries.reduce((sum, e) => sum + toNumber(e.buyin), 0) - totalExpenseAmount());
+
+        const complete = () => gameEntries.length >= 2 && outOrder.length >= gameEntries.length - 1;
+
+        const placeOf = (id) => {
+          const n = gameEntries.length;
+          const idx = outOrder.indexOf(id);
+          if (idx >= 0) return n - idx;
+          return complete() ? 1 : null;
+        };
+
+        const payouts = () => {
+          const split = pcts();
+          const total = Math.max(pool(), 0);
+          const result = {};
+          let paid = 0, winner = null;
+          gameEntries.forEach((e) => {
+            const place = placeOf(e.playerId);
+            if (!place) return;
+            result[e.playerId] = place <= split.length ? round2((total * split[place - 1]) / 100) : 0;
+            paid += result[e.playerId];
+            if (place === 1) winner = e.playerId;
+          });
+          if (winner !== null && total > 0) result[winner] = round2(result[winner] + total - paid);
+          return result;
+        };
+
+        const setFormatUI = (next) => {
+          format = next;
+          tournamentNameSuffix = next === "tournament";
+          document.querySelectorAll("[data-game-format]").forEach((b) => {
+            const on = b.dataset.gameFormat === next;
+            b.classList.toggle("active", on);
+            b.setAttribute("aria-pressed", String(on));
+          });
+        };
+
+        const render = () => {
+          if (activeGameId !== lastGameId) {
+            lastGameId = activeGameId;
+            outOrder = [];
+            $("payoutStructure").value = DEFAULT_STRUCTURE;
+            $("tournamentStatus").textContent = "";
+            setFormatUI(/ Tournament$/i.test($("gameName").value.trim()) ? "tournament" : "cash");
+          }
+
+          const show = format === "tournament" && !$("gameWorkspace").classList.contains("hidden") && canEditActiveGame();
+          $("tournamentSection").classList.toggle("hidden", !show);
+          if (!show) return;
+
+          const ids = new Set(gameEntries.map((e) => e.playerId));
+          outOrder = outOrder.filter((id) => ids.has(id));
+          const pay = payouts();
+          const done = complete();
+          $("tournamentPool").textContent = `Pool ${money(Math.max(pool(), 0))}`;
+          $("customPayoutWrap").classList.toggle("hidden", $("payoutStructure").value !== "custom");
+          $("applyPayoutsButton").classList.toggle("hidden", !done);
+          if (!done && !$("tournamentStatus").textContent) {
+            $("tournamentStatus").textContent = "Tap Out as players bust. Payouts fill in when one player is left.";
+          }
+
+          const rows = [...gameEntries].sort((a, b) => {
+            const pa = placeOf(a.playerId), pb = placeOf(b.playerId);
+            return (pa || 0) - (pb || 0) || 0;
+          });
+          // Placed players first (1st at top), players still in at the bottom.
+          const placed = rows.filter((e) => placeOf(e.playerId)).sort((a, b) => placeOf(a.playerId) - placeOf(b.playerId));
+          const still = rows.filter((e) => !placeOf(e.playerId));
+          $("tournamentPlayers").innerHTML = gameEntries.length
+            ? [...placed, ...still].map((e) => {
+                const place = placeOf(e.playerId);
+                const isOut = outOrder.includes(e.playerId);
+                const canOut = !isOut && outOrder.length < gameEntries.length - 1;
+                return `
+              <div class="tournament-row">
+                <strong>${place ? ordinal(place) : "In"}</strong>
+                <span class="t-name">${escapeHtml(e.name)}</span>
+                ${isOut
+                  ? `<button type="button" class="secondary small" data-undo-out="${e.playerId}">Undo</button>`
+                  : canOut
+                    ? `<button type="button" class="secondary small" data-out="${e.playerId}">Out</button>`
+                    : `<span></span>`}
+                <span class="t-pay">${place ? money(pay[e.playerId] || 0) : "—"}</span>
+              </div>`;
+              }).join("")
+            : `<p class="empty">Add players first.</p>`;
+        };
+
+        const applyPayouts = async () => {
+          if (!complete() || pool() <= 0) return;
+          const pay = payouts();
+          gameEntries.forEach((e) => {
+            const amount = pay[e.playerId] || 0;
+            e.cashout = amount > 0 ? amount.toFixed(2) : "0";
+          });
+          updateGameTotals();
+          renderGameEntries();
+          try {
+            await saveGame(false, false);
+            $("tournamentStatus").textContent = "Payouts applied to cash-outs.";
+          } catch (err) {
+            console.error(err);
+            showToast("Payouts applied, but saving failed.", "warning");
+          }
+        };
+
+        const onChange = () => {
+          $("tournamentStatus").textContent = "";
+          render();
+          applyPayouts();
+        };
+
+        document.querySelectorAll("[data-game-format]").forEach((b) =>
+          b.addEventListener("click", () => {
+            setFormatUI(b.dataset.gameFormat);
+            const input = $("gameName");
+            if (!input.disabled) {
+              const name = input.value.trim();
+              const before = input.value;
+              if (format === "tournament" && name && !/ Tournament$/i.test(name)) input.value = `${name} Tournament`;
+              if (format === "cash") input.value = name.replace(/ Tournament$/i, "");
+              if (input.value !== before) saveDraft();
+            }
+            render();
+          }));
+
+        $("tournamentPlayers").addEventListener("click", (event) => {
+          const out = event.target.closest("[data-out]");
+          const undo = event.target.closest("[data-undo-out]");
+          if (out) outOrder.push(out.dataset.out);
+          else if (undo) outOrder = outOrder.filter((id) => id !== undo.dataset.undoOut);
+          else return;
+          onChange();
+        });
+        $("payoutStructure").addEventListener("change", onChange);
+        $("customPayout").addEventListener("input", render);
+        $("customPayout").addEventListener("change", onChange);
+        $("applyPayoutsButton").addEventListener("click", applyPayouts);
+
+        const observer = new MutationObserver(render);
+        ["gamePlayerCount", "totalBuyins", "totalExpenses"].forEach((id) =>
+          observer.observe($(id), { childList: true, characterData: true, subtree: true }));
+        observer.observe($("gameWorkspace"), { attributes: true, attributeFilter: ["class"] });
+        render();
+      }
+
+      // ---- Leaderboard analytics: stats, highlights, trends, profile ----
+      function playerStats(p) {
+        const sessions = [...(p.sessions || [])].sort((a, b) => new Date(a.playedAt) - new Date(b.playedAt));
+        const games = sessions.length;
+        const wins = sessions.filter((x) => x.net > 0).length;
+        let win = 0, lose = 0, bestWin = 0, bestLose = 0;
+        sessions.forEach((x) => {
+          win = x.net > 0 ? win + 1 : 0;
+          lose = x.net < 0 ? lose + 1 : 0;
+          bestWin = Math.max(bestWin, win);
+          bestLose = Math.max(bestLose, lose);
+        });
+        const best = sessions.reduce((m, x) => (!m || x.net > m.net ? x : m), null);
+        const worst = sessions.reduce((m, x) => (!m || x.net < m.net ? x : m), null);
+        return {
+          sessions, games, wins, best, worst, bestWin, bestLose,
+          currentWin: win,
+          winRate: games ? (wins / games) * 100 : 0,
+          avgBuyin: games ? sessions.reduce((a, x) => a + x.buyin, 0) / games : 0,
+          avgNet: games ? p.net_result / games : 0,
+        };
+      }
+
+      function signedMoney(v) {
+        return `${v > 0 ? "+" : v < 0 ? "-" : ""}${money(Math.abs(v))}`;
+      }
+
+      function renderLeaderboardHighlights(players) {
+        const host = document.getElementById("leaderboardHighlights");
+        if (!host) return;
+        if (!players.length) { host.innerHTML = ""; return; }
+        const stats = players.map((p) => ({ p, st: playerStats(p) }));
+        const top = (fn, min = -Infinity) =>
+          stats.filter(({ st }) => fn({ st }) > min).sort((a, b) => fn(b) - fn(a))[0];
+        const bigWin = top(({ st }) => st.best?.net ?? 0, 0);
+        const bigLoss = stats.filter(({ st }) => (st.worst?.net ?? 0) < 0).sort((a, b) => a.st.worst.net - b.st.worst.net)[0];
+        const streak = top(({ st }) => st.bestWin, 1);
+        const most = top(({ st }) => st.games, 0);
+        const rate = stats.filter(({ st }) => st.games >= 3).sort((a, b) => b.st.winRate - a.st.winRate)[0];
+        const hot = top(({ st }) => st.currentWin, 1);
+        const card = (label, who, value, note) =>
+          `<div class="highlight-card"><span>${label}</span><strong>${escapeHtml(who)}</strong><small>${value}${note ? ` · ${escapeHtml(note)}` : ""}</small></div>`;
+        const cards = [
+          bigWin && card("Biggest win", bigWin.p.player_name, `+${money(bigWin.st.best.net)}`, formatLeaderboardDate(bigWin.st.best.playedAt)),
+          bigLoss && card("Biggest loss", bigLoss.p.player_name, `-${money(Math.abs(bigLoss.st.worst.net))}`, formatLeaderboardDate(bigLoss.st.worst.playedAt)),
+          streak && card("Longest winning streak", streak.p.player_name, `${streak.st.bestWin} games in a row`, ""),
+          most && card("Most games played", most.p.player_name, `${most.st.games} games`, ""),
+          rate && card("Best win rate", rate.p.player_name, `${Math.round(rate.st.winRate)}%`, "min. 3 games"),
+          hot && card("Hot right now", hot.p.player_name, `${hot.st.currentWin} wins in a row`, ""),
+        ].filter(Boolean);
+        host.innerHTML = `<h2>Highlights</h2><p class="subtitle">Records for ${escapeHtml(leaderboardPeriodLabel())}.</p><div class="highlight-grid">${cards.join("")}</div>`;
+      }
+
+      function renderLeaderboardTrends(players) {
+        renderLeaderboardHighlights(players || []);
+        const host = document.getElementById("leaderboardTrends");
+        if (!host) return;
+        trendPlayers = players || [];
+        const games = new Map();
+        trendPlayers.forEach((p) => p.sessions.forEach((x) => games.set(x.gameId, x.playedAt)));
+        if (!trendPlayers.length || games.size < 2) {
+          host.innerHTML = trendPlayers.length
+            ? `<h2>Trends</h2><p class="empty">Trends appear after at least 2 completed games.</p>`
+            : "";
+          return;
+        }
+        const ids = new Set(trendPlayers.map((p) => p.player_id));
+        if (!trendSelected || ![...trendSelected].some((id) => ids.has(id))) {
+          trendSelected = new Set(trendPlayers.slice(0, 5).map((p) => p.player_id));
+        }
+        drawLeaderboardTrends();
+      }
+
+      // Per-player points for every game in `order`, plus rank among players
+      // who have played at least once by that game.
+      function buildSeries(players, order) {
+        const series = players.map((p, i) => {
+          const byGame = new Map(p.sessions.map((x) => [x.gameId, x.net]));
+          let total = 0, seen = false;
+          const points = order.map(([gameId, playedAt], idx) => {
+            const net = byGame.get(gameId);
+            if (net !== undefined) { total += net; seen = true; }
+            return { idx, total, net, playedAt, played: net !== undefined, seen, rank: null };
+          });
+          return { p, color: TREND_COLORS[i % TREND_COLORS.length], points };
+        });
+        order.forEach((_, idx) => {
+          const active = series.filter((x) => x.points[idx].seen).sort((a, b) => b.points[idx].total - a.points[idx].total);
+          active.forEach((x, k) => {
+            const prev = active[k - 1];
+            x.points[idx].rank = k && prev.points[idx].total === x.points[idx].total ? prev.points[idx].rank : k + 1;
+          });
+        });
+        return series;
+      }
+
+      function trendSvg(kind, shown, order, rankCount) {
+        const W = 640, H = 280, L = 52, R = 14, T = 12, B = 30;
+        const start = kind === "game" ? Math.max(0, order.length - 12) : 0;
+        const n = order.length - start;
+        const dl = (v) => formatLeaderboardDate(v);
+        const fmt = (v) => `${v < 0 ? "-" : ""}$${Math.abs(Math.round(v))}`;
+        const xLine = (i) => L + (n <= 1 ? 0 : ((i - start) / (n - 1)) * (W - L - R));
+        const xSlot = (i) => L + ((i - start + 0.5) / n) * (W - L - R);
+        let lo, hi, ticks, Y, fmtTick = fmt;
+
+        if (kind === "rank") {
+          const max = Math.max(2, rankCount);
+          Y = (v) => T + ((v - 1) / (max - 1)) * (H - T - B);
+          const step = Math.ceil(max / 6);
+          ticks = Array.from({ length: Math.ceil(max / step) + 1 }, (_, i) => 1 + i * step).filter((v) => v <= max);
+          fmtTick = (v) => `#${v}`;
+        } else {
+          const vals = shown.flatMap((x) => x.points.slice(start).map((pt) => (kind === "game" ? pt.net ?? 0 : pt.total))).concat(0);
+          lo = Math.min(...vals); hi = Math.max(...vals);
+          if (hi === lo) { hi += 1; lo -= 1; }
+          const pad = (hi - lo) * 0.08; lo -= pad; hi += pad;
+          Y = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
+          ticks = Array.from({ length: 5 }, (_, i) => lo + ((hi - lo) * i) / 4);
+        }
+
+        const grid = ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="currentColor">${fmtTick(v)}</text>`).join("");
+        const zero = kind === "rank" ? "" : `<line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55"/>`;
+        let marks = "";
+        if (kind === "game") {
+          const slot = (W - L - R) / n;
+          shown.forEach((x, k) => {
+            const bw = Math.max(3, Math.min(20, (slot * 0.8) / shown.length));
+            x.points.slice(start).filter((pt) => pt.played).forEach((pt) => {
+              const cx = xSlot(pt.idx) - (bw * shown.length) / 2 + bw * k;
+              const y0 = Y(0), y1 = Y(pt.net);
+              marks += `<rect x="${cx}" y="${Math.min(y0, y1)}" width="${bw}" height="${Math.max(1, Math.abs(y1 - y0))}" rx="2" fill="${x.color}"><title>${escapeHtml(x.p.player_name)} · ${escapeHtml(dl(pt.playedAt))} · ${pt.net >= 0 ? "+" : "-"}${money(Math.abs(pt.net))}</title></rect>`;
+            });
+          });
+        } else {
+          shown.forEach((x) => {
+            const pts = x.points.filter((pt) => (kind === "rank" ? pt.rank !== null : true));
+            marks += `<polyline fill="none" stroke="${x.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((pt) => `${xLine(pt.idx)},${Y(kind === "rank" ? pt.rank : pt.total)}`).join(" ")}"/>`;
+            x.points.filter((pt) => pt.played).forEach((pt) => {
+              const tip = kind === "rank" ? `rank #${pt.rank}` : `game ${pt.net >= 0 ? "+" : "-"}${money(Math.abs(pt.net))} · total ${fmt(pt.total)}`;
+              marks += `<circle cx="${xLine(pt.idx)}" cy="${Y(kind === "rank" ? pt.rank : pt.total)}" r="3.6" fill="${x.color}"><title>${escapeHtml(x.p.player_name)} · ${escapeHtml(dl(pt.playedAt))} · ${tip}</title></circle>`;
+            });
+          });
+        }
+        return `<svg class="trend-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Leaderboard trend chart">${grid}${zero}${marks}
+          <text x="${L}" y="${H - 8}" font-size="11" fill="currentColor">${escapeHtml(dl(order[start][1]))}</text>
+          <text x="${W - R}" y="${H - 8}" font-size="11" text-anchor="end" fill="currentColor">${escapeHtml(dl(order[order.length - 1][1]))}</text></svg>`;
+      }
+
+      function drawLeaderboardTrends() {
+        const host = document.getElementById("leaderboardTrends");
+        const order = [...new Map(trendPlayers.flatMap((p) => p.sessions.map((x) => [x.gameId, x.playedAt])))]
+          .sort((a, b) => new Date(a[1]) - new Date(b[1]));
+        const series = buildSeries(trendPlayers, order);
+        const shown = series.filter((x) => trendSelected.has(x.p.player_id));
+        const modes = [["cumulative", "Cumulative"], ["game", "Per game"], ["rank", "Rank"]];
+        const note = { cumulative: "Cumulative net profit over completed games.", game: "Net result in each of the last 12 games.", rank: "Leaderboard position after each game." }[trendMode];
+        host.innerHTML = `
+          <h2>Trends</h2>
+          <div class="seg trend-modes" role="group" aria-label="Chart view">
+            ${modes.map(([k, l]) => `<button type="button" class="${trendMode === k ? "active" : ""}" data-trend-mode="${k}" aria-pressed="${trendMode === k}">${l}</button>`).join("")}
+          </div>
+          <p class="subtitle" style="margin-top: 10px">${note} Tap names to show or hide lines.</p>
+          <div class="trend-chips">
+            ${series.map((x) => `
+              <button type="button" class="trend-chip ${trendSelected.has(x.p.player_id) ? "on" : ""}" style="--c:${x.color}" data-trend-player="${x.p.player_id}" aria-pressed="${trendSelected.has(x.p.player_id)}">
+                <i></i>${escapeHtml(x.p.player_name)} <em>${signedMoney(x.p.net_result)}</em>
+              </button>`).join("")}
+          </div>
+          ${shown.length ? trendSvg(trendMode, shown, order, trendPlayers.length) : `<p class="empty">Select at least one player.</p>`}`;
+      }
+
+      document.getElementById("leaderboardTrends")?.addEventListener("click", (event) => {
+        const mode = event.target.closest("[data-trend-mode]");
+        if (mode) { trendMode = mode.dataset.trendMode; drawLeaderboardTrends(); return; }
+        const chip = event.target.closest("[data-trend-player]");
+        if (!chip || !trendSelected) return;
+        const player = trendPlayers.find((p) => String(p.player_id) === chip.dataset.trendPlayer);
+        if (!player) return;
+        if (trendSelected.has(player.player_id)) trendSelected.delete(player.player_id);
+        else trendSelected.add(player.player_id);
+        drawLeaderboardTrends();
+      });
+
+      // Player profile sheet
+      function openPlayerProfile(playerId) {
+        const p = trendPlayers.find((x) => String(x.player_id) === String(playerId));
+        if (!p) return;
+        const st = playerStats(p);
+        const stat = (label, value, note = "") =>
+          `<div class="highlight-card"><span>${label}</span><strong>${value}</strong>${note ? `<small>${escapeHtml(note)}</small>` : ""}</div>`;
+        const order = st.sessions.map((x) => [x.gameId, x.playedAt]);
+        const chart = order.length >= 2
+          ? trendSvg("cumulative", buildSeries([p], order).map((x) => ({ ...x, color: TREND_COLORS[0] })), order, 1)
+          : "";
+        document.getElementById("profileName").textContent = p.player_name;
+        document.getElementById("profileSubtitle").textContent =
+          `Rank #${p.profit_rank} of ${trendPlayers.length} · ${leaderboardPeriodLabel()}`;
+        document.getElementById("profileBody").innerHTML = `
+          <div class="profile-stats">
+            ${stat("Net profit", signedMoney(p.net_result), `${st.games} games`)}
+            ${stat("Win rate", `${Math.round(st.winRate)}%`, `${st.wins} of ${st.games} games`)}
+            ${stat("Avg buy-in", money(st.avgBuyin))}
+            ${stat("Avg per game", signedMoney(st.avgNet))}
+            ${stat("Best night", st.best ? signedMoney(st.best.net) : "—", st.best ? formatLeaderboardDate(st.best.playedAt) : "")}
+            ${stat("Worst night", st.worst ? signedMoney(st.worst.net) : "—", st.worst ? formatLeaderboardDate(st.worst.playedAt) : "")}
+            ${stat("Best win streak", `${st.bestWin}`, st.currentWin > 1 ? `${st.currentWin} right now` : "games in a row")}
+            ${stat("Worst losing streak", `${st.bestLose}`, "games in a row")}
+          </div>
+          ${chart ? `<h3 style="margin: 4px 0 0">Net profit over time</h3>${chart}` : ""}
+          <div class="profile-recent">
+            <h3 style="margin: 0 0 6px">Recent games</h3>
+            ${[...st.sessions].reverse().slice(0, 6).map((x) => `
+              <div class="lb-session"><span>${escapeHtml(formatLeaderboardDate(x.playedAt))}</span><span>${money(x.buyin)}</span><span>${money(x.cashout)}</span><strong class="${x.net >= 0 ? "positive" : "negative"}">${signedMoney(x.net)}</strong></div>`).join("")}
+          </div>`;
+        document.getElementById("playerProfile").hidden = false;
+      }
+
+      function closePlayerProfile() {
+        document.getElementById("playerProfile").hidden = true;
+      }
+      document.getElementById("leaderboard")?.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-open-profile]");
+        if (!button) return;
+        event.stopImmediatePropagation();
+        openPlayerProfile(button.dataset.openProfile);
+      }, true);
+      document.getElementById("closeProfileButton").addEventListener("click", closePlayerProfile);
+      document.getElementById("playerProfile").addEventListener("click", (event) => {
+        if (event.target.id === "playerProfile") closePlayerProfile();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closePlayerProfile();
+      });
 </script>
+  <div class="profile-overlay" id="playerProfile" hidden>
+      <div class="profile-sheet" role="dialog" aria-modal="true" aria-labelledby="profileName">
+        <div class="panel-title-row">
+          <div>
+            <h2 id="profileName"></h2>
+            <p class="subtitle" id="profileSubtitle"></p>
+          </div>
+          <button type="button" class="secondary small" id="closeProfileButton">Close</button>
+        </div>
+        <div id="profileBody"></div>
+      </div>
+    </div>
   </body>
 </html>

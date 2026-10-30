@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1f4d36" />
+    <meta name="theme-color" content="#0f3a42" />
+    <script>
+      (function () {
+        try {
+          var mode = localStorage.getItem("poker-vault-theme") || "auto";
+          var dark = mode === "dark" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+        } catch (e) {}
+      })();
+    </script>
     <title>Poker Vault</title>
     <meta name="poker-vault-ui-version" content="v2-no-roster-tab">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -3222,6 +3231,8 @@
       }
 
 #adminConsoleSection.hidden { display: none !important; }
+      #dashboard.manage-open .workspace-panel { display: none !important; }
+
       @media (max-width: 560px) {
         #leaderboardPanel .leaderboard-insights {
           grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3742,6 +3753,270 @@
       @media (min-width: 560px) { .profile-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
       .profile-recent { margin-top: 14px; }
       .profile-recent .lb-session { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 6px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 0.86rem; }
+
+/* Leaderboard sub-tabs */
+#leaderboardPanel .lb-subtabs{margin:0}
+#leaderboardPanel .lb-subtabs button{min-width:0;padding:10px 4px;font-size:.88rem;white-space:nowrap}
+#leaderboardPanel[data-lb-view="board"] #leaderboardHighlightsCard,
+#leaderboardPanel[data-lb-view="board"] #leaderboardTrendsCard,
+#leaderboardPanel[data-lb-view="highlights"] #leaderboardBoardCard,
+#leaderboardPanel[data-lb-view="highlights"] #leaderboardTrendsCard,
+#leaderboardPanel[data-lb-view="trends"] #leaderboardBoardCard,
+#leaderboardPanel[data-lb-view="trends"] #leaderboardHighlightsCard{display:none}
+#leaderboardPanel[data-lb-view="highlights"] #leaderboardHighlightsCard,
+#leaderboardPanel[data-lb-view="trends"] #leaderboardTrendsCard{margin-top:0!important}
+.lb-more{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:12px}
+
+/* ===== Poker Vault v3 theme: ink-teal, brass, stone ===== */
+:root{
+  --green:#0f3a42; --green-2:#17525c; --green-soft:#e3eeee;
+  --gold:#b88a3e; --gold-soft:#f5ecd9;
+  --coral:#a8472f; --coral-soft:#f7e8e3;
+  --red:#a63a2b; --red-soft:#f8e9e5;
+  --ink:#16201f; --ink-soft:#3d4a49; --muted:#7a8786;
+  --line:#e2e7e6; --line-strong:#cfd8d7;
+  --page:#eef1f0; --surface:#ffffff; --surface-2:#f6f8f7;
+  --warning-bg:#f5ecd9; --warning-text:#6b4d12;
+  --profit:#14704f; --loss:#a63a2b;
+  --shadow-sm:0 1px 2px rgba(15,40,44,.06);
+  --shadow-raised:0 1px 2px rgba(15,40,44,.05),0 8px 24px -8px rgba(15,40,44,.10);
+  --shadow-md:0 16px 40px -12px rgba(8,28,32,.28);
+  --ring:0 0 0 3px rgba(184,138,62,.35);
+  --font-body:"Manrope","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+body{background:radial-gradient(1200px 500px at 50% -120px,#dfe8e7,transparent 70%),var(--page);letter-spacing:-.005em}
+h2{font-size:1.65rem;letter-spacing:-.02em}
+h3{font-size:.95rem;letter-spacing:0;text-transform:none;font-family:var(--font-display);font-weight:600}
+label{font-size:.78rem;font-weight:600;letter-spacing:.01em;text-transform:none;color:var(--ink-soft)}
+.compact-list-head,.history-figure-label,.lb-head,.history-player-header,.lb-details-header,.stat span,.leaderboard-insight span,.highlight-card span{text-transform:none;letter-spacing:.01em;font-size:.76rem;font-weight:600}
+
+/* Header */
+.top-banner{background:linear-gradient(120deg,#0a2a31 0%,#0f3a42 60%,#17525c 100%);border:0;border-radius:18px;box-shadow:var(--shadow-md),inset 0 -2px 0 rgba(184,138,62,.7)}
+.brand-mark{color:#d4ab5e}
+.brand-name{font-size:1.3rem;letter-spacing:.01em}
+.banner-select:focus,.banner-menu-button:focus-visible{box-shadow:0 0 0 3px rgba(212,171,94,.45);border-color:#d4ab5e}
+
+/* Surfaces */
+.card{border:1px solid rgba(15,58,66,.08);border-radius:22px;padding:28px 28px 30px}
+.section-head{border-bottom:1px solid var(--line)}
+.stat,.item,.leaderboard-insight,.highlight-card{border-radius:14px}
+.stat-key{background:linear-gradient(135deg,#0f3a42,#17525c);border-color:transparent}
+.stat-key span{color:rgba(255,255,255,.7)}
+.stat-key strong{color:#fff}
+.stat-key.off-balance{background:linear-gradient(135deg,#8c2f22,#a63a2b)}
+.stat-key.off-balance span{color:rgba(255,255,255,.75)}
+.stat-key.off-balance strong{color:#fff}
+
+/* Buttons */
+button{border-radius:12px;padding:11px 18px;background:var(--btn,var(--green));box-shadow:0 1px 2px rgba(15,40,44,.18)}
+button:hover{background:var(--btn-2,var(--green-2))}
+button.secondary{background:var(--surface);color:var(--green);border-color:var(--line-strong)}
+button.secondary:hover{background:var(--green-soft);border-color:var(--green-2)}
+input,select{border-radius:12px;padding:12px 14px;background:var(--surface-2)}
+input:focus,select:focus{background:#fff;border-color:var(--gold)}
+
+/* Tabs */
+.workspace-nav{border-radius:14px;padding:5px;background:rgba(15,58,66,.07)}
+.workspace-tab{border-radius:10px;padding:9px 20px}
+.workspace-tab.active,.workspace-tab.active:hover{background:var(--green);color:#fff;border-color:transparent;box-shadow:0 2px 8px -2px rgba(15,58,66,.5)}
+.seg button.active,.seg button.active:hover{background:var(--green);color:#fff;border-color:transparent}
+.group-chip{background:var(--gold-soft);color:#6b4d12}
+.game-status{background:var(--green);color:#fff}
+
+/* Player rows */
+.compact-game-list{border-radius:18px;border-color:var(--line);box-shadow:var(--shadow-sm)}
+.compact-game-row{grid-template-columns:minmax(0,1fr) 84px 84px auto;gap:10px;padding:18px 16px}
+.compact-game-row.view-only{grid-template-columns:minmax(0,1fr) 84px 84px}
+.compact-list-head{grid-template-columns:minmax(0,1fr) 84px 84px 104px;padding:0 16px 8px}
+.compact-list-head.view-only{grid-template-columns:minmax(0,1fr) 84px 84px}
+button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+.compact-money{font-size:1rem}
+.compact-money small{font-size:.72rem;letter-spacing:.01em;text-transform:none;font-weight:600}
+.compact-actions{gap:14px;align-items:center}
+.compact-icon-button{width:46px;height:46px;border-radius:14px;border:1px solid var(--line-strong);background:var(--surface-2)}
+.compact-icon-button svg{width:20px;height:20px}
+.edit-icon{color:var(--green)}
+.edit-icon:hover{background:var(--green);border-color:var(--green);color:#fff}
+.remove-icon{color:var(--loss);background:var(--red-soft);border-color:#ecc9c1}
+.remove-icon:hover{background:var(--loss);border-color:var(--loss);color:#fff}
+.done-icon{background:var(--green);color:#fff;border-color:transparent}
+.editing-actions{gap:16px}
+.editing-actions .done-icon,.editing-actions .remove-icon{width:48px;height:48px;flex:0 0 48px}
+.compact-game-row.editing{background:var(--surface-2);padding:18px 16px}
+.current-buyin{border-radius:12px;background:var(--gold-soft);border-color:#e6d3a8}
+.current-buyin span{color:#6b4d12}
+.current-buyin strong{color:var(--ink)}
+
+@media (max-width:480px){
+  .compact-game-row,.compact-game-row.view-only{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;row-gap:8px;padding:16px 14px}
+  .compact-game-row.view-only{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .compact-money{text-align:left}
+  .compact-icon-button{width:46px;height:46px}
+  .compact-game-row.editing .editing-actions .done-icon,
+  .compact-game-row.editing .editing-actions .remove-icon{width:48px;height:48px;flex-basis:48px}
+}
+@media (max-width:640px){
+  #dashboard .workspace-nav{background:rgba(255,255,255,.96);backdrop-filter:blur(12px)}
+  #dashboard .workspace-nav .workspace-tab.active,#dashboard .workspace-nav .workspace-tab.active:hover{background:var(--green-soft);color:var(--green);box-shadow:none}
+}
+
+/* Leaderboard & history */
+.lb-table,.history-game,.settle-list,.expense-list{border-radius:16px}
+.rank-1,.rank-2,.rank-3{background:var(--gold);color:#fff}
+.rank-2{background:#8e9b9a}
+.rank-3{background:#a9774a}
+.history-game-name{font-size:1.08rem}
+.modal{border-radius:20px}
+.modal::before{background:var(--gold)}
+
+/* ===== Skeleton loading ===== */
+.skeleton{display:grid;gap:10px;padding:4px 0}
+.skeleton-row{height:58px;border-radius:14px;background:linear-gradient(90deg,var(--line) 0%,var(--surface-2) 45%,var(--line) 90%);background-size:220% 100%;animation:skeleton-shimmer 1.3s ease-in-out infinite}
+.skeleton-row.short{height:20px;width:42%}
+@keyframes skeleton-shimmer{from{background-position:220% 0}to{background-position:-220% 0}}
+@media (prefers-reduced-motion:reduce){.skeleton-row{animation:none}}
+
+/* ===== Toast with action ===== */
+.toast.toast-action{display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:auto}
+.toast.toast-action button{flex:0 0 auto}
+
+/* ===== Dark mode ===== */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --green:#8fd0d2; --green-2:#b2e0e1; --green-soft:#16333a;
+  --btn:#1d6f76; --btn-2:#258690;
+  --gold:#d4ab5e; --gold-soft:#2b2616;
+  --coral:#e08a6a; --coral-soft:#3a2119;
+  --red:#ef8a78; --red-soft:#3a1f1a;
+  --ink:#e8efee; --ink-soft:#b6c4c3; --muted:#8a9a99;
+  --line:#243234; --line-strong:#344a4f;
+  --page:#0b1517; --surface:#112023; --surface-2:#162a2e;
+  --warning-bg:#2b2616; --warning-text:#e6c77a;
+  --profit:#4fd1a1; --loss:#f08a78;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.45);
+  --shadow-raised:0 1px 2px rgba(0,0,0,.4),0 8px 24px -8px rgba(0,0,0,.5);
+  --shadow-md:0 16px 40px -12px rgba(0,0,0,.65);
+  --ring:0 0 0 3px rgba(212,171,94,.4);
+}
+:root[data-theme="dark"] body{background:radial-gradient(1200px 500px at 50% -120px,#12292d,transparent 70%),var(--page)}
+:root[data-theme="dark"] .card{border-color:rgba(255,255,255,.07)}
+:root[data-theme="dark"] input:focus,
+:root[data-theme="dark"] select:focus{background:var(--surface)}
+:root[data-theme="dark"] .banner-select option{background:var(--surface);color:var(--ink)}
+:root[data-theme="dark"] .workspace-nav,
+:root[data-theme="dark"] .seg{background:rgba(255,255,255,.06)}
+:root[data-theme="dark"] .workspace-tab:hover,
+:root[data-theme="dark"] .seg button:hover{background:rgba(255,255,255,.08)}
+:root[data-theme="dark"] .workspace-tab.active,
+:root[data-theme="dark"] .workspace-tab.active:hover,
+:root[data-theme="dark"] .seg button.active,
+:root[data-theme="dark"] .seg button.active:hover,
+:root[data-theme="dark"] .game-status,
+:root[data-theme="dark"] .done-icon,
+:root[data-theme="dark"] .edit-icon:hover,
+:root[data-theme="dark"] .settle-even-mark{background:var(--btn);border-color:transparent;color:#fff}
+:root[data-theme="dark"] button:disabled:not(.secondary):not(.ghost):not(.danger):hover{background:var(--btn)}
+:root[data-theme="dark"] .group-chip,
+:root[data-theme="dark"] .current-buyin span{color:#e6c77a}
+:root[data-theme="dark"] .current-buyin{border-color:#4a4122}
+:root[data-theme="dark"] .success,
+:root[data-theme="dark"] .toast.success,
+:root[data-theme="dark"] .settle-even{border-color:#2c5a46}
+:root[data-theme="dark"] .warning,
+:root[data-theme="dark"] .toast.warning{border-color:#5a4a1e}
+:root[data-theme="dark"] .toast.error,
+:root[data-theme="dark"] .danger-zone,
+:root[data-theme="dark"] button.danger,
+:root[data-theme="dark"] #gameActionBar #clearGameButton,
+:root[data-theme="dark"] .remove-icon{border-color:#6b3a30}
+:root[data-theme="dark"] .remove-icon:hover{background:#b3402a;border-color:#b3402a;color:#fff}
+@media (max-width:640px){
+  :root[data-theme="dark"] #dashboard .workspace-nav{background:rgba(17,32,35,.96)}
+}
+
+/* ===== Period chips ===== */
+.period-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 14px}
+.period-chip{flex:0 0 auto;padding:7px 12px;font-size:.82rem;border-radius:999px;background:var(--surface);color:var(--ink-soft);border:1px solid var(--line-strong);box-shadow:none;white-space:nowrap}
+.period-chip:hover{background:var(--green-soft);color:var(--green)}
+.period-chip.active,.period-chip.active:hover{background:var(--btn,var(--green));color:#fff;border-color:transparent}
+.period-row .period-filters{margin-left:auto;padding:7px 12px;font-size:.82rem}
+
+/* ===== Blind timer ===== */
+.blind-timer{margin:4px 0 18px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2);text-align:center}
+.blind-level{display:flex;justify-content:space-between;align-items:baseline;gap:10px;color:var(--ink-soft);font-weight:700;font-size:.9rem}
+.blind-level #blindBlinds{color:var(--ink);font-family:var(--font-display);font-size:1.15rem}
+.blind-clock{margin:6px 0 2px;color:var(--ink);font-family:var(--font-display);font-size:3.4rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums lining-nums}
+.blind-clock.low{color:var(--loss)}
+.blind-clock.paused{opacity:.6}
+.blind-next{color:var(--muted);font-size:.84rem}
+.blind-controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:14px}
+.blind-controls button{padding:10px 4px;font-size:.84rem;white-space:nowrap}
+.blind-settings{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;text-align:left}
+.blind-settings label{margin:0}
+.blind-settings select{width:auto;min-width:92px}
+
+/* ===== Invite QR ===== */
+.qr-box{display:grid;place-items:center;margin:14px auto;padding:14px;border-radius:16px;background:#fff;width:min(260px,100%);min-height:120px;color:#555;font-size:.85rem;text-align:center}
+.qr-box svg{display:block;width:100%;height:auto}
+.qr-code-text{margin:4px 0;font-family:var(--font-display);font-size:1.6rem;letter-spacing:.18em;text-align:center}
+.qr-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:12px}
+
+/* ===== Casino chip styling ===== */
+.chip,.lb-table .rank,.roster-row .roster-avatar{
+  --chip:#17525c;--chip-ink:#fff;
+  position:relative;isolation:isolate;display:inline-grid;place-items:center;
+  width:32px;height:32px;padding:0;border-radius:50%;
+  background:repeating-conic-gradient(#fff 0 15deg,var(--chip) 15deg 45deg);
+  color:var(--chip-ink);font-size:.82rem;font-weight:800;letter-spacing:0;line-height:1;
+  box-shadow:0 1px 2px rgba(0,0,0,.35),inset 0 0 0 1px rgba(0,0,0,.18);
+  font-variant-numeric:tabular-nums lining-nums;
+}
+.chip::before,.lb-table .rank::before,.roster-row .roster-avatar::before{
+  content:"";position:absolute;inset:4px;z-index:-1;border-radius:50%;
+  background:var(--chip);border:1.5px dashed rgba(255,255,255,.8);
+}
+.chip-sm{width:40px;height:40px;font-size:.7rem}
+.chip-sm::before{inset:5px}
+.lb-table .rank-1{--chip:#d9aa43;--chip-ink:#3b2d00}
+.lb-table .rank-2{--chip:#c3cccb;--chip-ink:#26302f}
+.lb-table .rank-3{--chip:#b26a35;--chip-ink:#fff}
+.roster-row .roster-avatar{width:34px;height:34px;font-size:.72rem}
+.roster-row{grid-template-columns:34px minmax(0,1fr) auto}
+#leaderboardPanel .lb-row{grid-template-columns:36px minmax(0,1fr) 84px}
+.lb-head .chip{display:none}
+#blindBlinds{display:flex;align-items:center;gap:6px}
+@media (max-width:640px){#leaderboardPanel .lb-row{grid-template-columns:36px minmax(0,1fr) 78px}}
+@media (max-width:360px){#leaderboardPanel .lb-row{grid-template-columns:36px minmax(0,1fr) 74px}}
+
+/* Group picker keeps its dark look while focused (the global input:focus rule made it white) */
+.top-banner .banner-select:focus{
+  background:rgba(0,0,0,.22) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%23ffffff' fill-opacity='.7' d='M1 1.5 6 6.5l5-5'/%3E%3C/svg%3E") no-repeat right 11px center / 10px;
+  color:#fff;
+}
+
+/* ===== Leaderboard header: tidy tabs + period row ===== */
+#leaderboardPanel .lb-subtabs{margin:0 0 12px}
+.period-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) 44px;gap:6px;align-items:stretch;margin:0}
+.period-row .period-chip{display:grid;place-items:center;padding:9px 2px;font-size:.78rem;text-align:center}
+.period-row .period-filters{position:relative;display:inline-grid;place-items:center;width:44px;margin:0;padding:0;border-radius:999px;font-size:.82rem}
+.period-filters svg{display:block;width:18px;height:18px}
+.p-full,.pf-label{display:none}
+.period-filters:not([data-count=""])::after{content:attr(data-count);position:absolute;top:-5px;right:-3px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--gold);color:#fff;font-size:.66rem;font-weight:800;line-height:1}
+#leaderboardFilterPanel{margin-top:12px}
+#leaderboardFilterPanel .filter-bar{margin:0;padding:14px 0 0;border:0;border-top:1px solid var(--line)}
+@media (min-width:561px){
+  .period-row{display:flex;flex-wrap:wrap;gap:8px}
+  .period-row .period-chip{display:inline-block;padding:8px 14px;font-size:.84rem}
+  .p-full{display:inline}.p-short{display:none}
+  .period-row .period-filters{display:inline-flex;align-items:center;gap:6px;width:auto;margin-left:auto;padding:8px 14px}
+  .pf-label{display:inline}
+}
+
+/* ===== History header ===== */
+.history-filters .history-search{margin-bottom:10px}
+#historyFilterPanel{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+#historyFilterPanel .history-filter-row{grid-template-columns:minmax(0,1fr) auto;margin-top:0}
+#historyFilterPanel .history-filter-row button{grid-column:auto;width:auto}
 </style>
   </head>
 
@@ -3779,11 +4054,11 @@
               <button type="button" class="banner-menu-item hidden" id="manageGroupsButton">
                 <span>Manage groups</span><span aria-hidden="true">→</span>
               </button>
-              <button type="button" class="banner-menu-item hidden" id="adminConsoleButton">
-                <span>Admin Console</span><span aria-hidden="true">→</span>
-              </button>
               <button type="button" class="banner-menu-item" id="changePasswordButton">
                 <span>Change password</span><span aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="banner-menu-item" id="themeToggleButton">
+                <span id="themeToggleLabel">Theme: Auto</span><span aria-hidden="true">◐</span>
               </button>
               <button type="button" class="banner-menu-item banner-menu-signout" id="signOutButton">
                 <span>Sign out</span><span aria-hidden="true">↗</span>
@@ -3905,10 +4180,7 @@
               Select or create a group before starting a game.
             </div>
 
-            <div id="gameInitialLoading" class="empty-workspace">
-              <p class="empty-workspace-title">Checking current game…</p>
-              <p>Loading this group’s live table.</p>
-            </div>
+            <div id="gameInitialLoading" aria-busy="true"><span class="sr-only">Checking current game…</span><div class="skeleton"><div class="skeleton-row short"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div></div>
 
             <div id="noLiveGameMessage" class="empty-workspace hidden">
               <p class="empty-workspace-title" id="noLiveGameTitle">
@@ -3927,6 +4199,14 @@
                   id="startGameButton"
                 >
                   Start a game
+                </button>
+
+                <button
+                  type="button"
+                  class="secondary hidden"
+                  id="reopenLastGameButton"
+                >
+                  Undo close
                 </button>
 
                 <button
@@ -4146,8 +4426,36 @@
 
               <div class="panel-section hidden" id="tournamentSection">
                 <div class="section-head">
-                  <h3>Tournament payouts</h3>
+                  <h3>Tournament</h3>
                   <span class="section-count" id="tournamentPool"></span>
+                </div>
+                <div class="blind-timer" id="blindTimer">
+                  <div class="blind-level">
+                    <span id="blindLevelLabel">Level 1</span>
+                    <span id="blindBlinds">25 / 50</span>
+                  </div>
+                  <div class="blind-clock paused" id="blindClock" role="timer" aria-live="off">15:00</div>
+                  <div class="blind-next" id="blindNext">Next: 50 / 100</div>
+                  <div class="blind-controls">
+                    <button type="button" id="blindStartButton">Start</button>
+                    <button type="button" class="secondary" id="blindPrevButton" aria-label="Previous level">&lsaquo; Level</button>
+                    <button type="button" class="secondary" id="blindNextButton" aria-label="Next level">Level &rsaquo;</button>
+                    <button type="button" class="ghost" id="blindResetButton">Reset</button>
+                  </div>
+                  <div class="blind-settings">
+                    <label for="blindMinutes">Minutes per level</label>
+                    <select id="blindMinutes">
+                      <option value="5">5</option>
+                      <option value="10">10</option>
+                      <option value="12">12</option>
+                      <option value="15" selected>15</option>
+                      <option value="20">20</option>
+                      <option value="30">30</option>
+                      <option value="45">45</option>
+                      <option value="60">60</option>
+                    </select>
+                    <button type="button" class="ghost small" id="blindSoundButton">Bell: On</button>
+                  </div>
                 </div>
                 <label for="payoutStructure">Payout structure</label>
                 <select id="payoutStructure">
@@ -4220,24 +4528,37 @@
                 <label class="sr-only" for="historySearch">Search games</label>
                 <input id="historySearch" type="search" placeholder="Search games..." autocomplete="off" />
               </div>
-              <div class="history-filter-row">
-                <div class="filter-field">
-                  <label for="historyPlayerFilter">Player</label>
-                  <select id="historyPlayerFilter">
-                    <option value="">All players</option>
-                  </select>
-                </div>
-                <div class="filter-field">
-                  <label for="historyDateFilter">Date</label>
-                  <select id="historyDateFilter">
-                    <option value="all">All time</option>
-                    <option value="month">This month</option>
-                    <option value="3months">Last 3 months</option>
-                    <option value="year">This year</option>
-                  </select>
-                </div>
-                <button class="ghost" id="clearHistoryFiltersButton">Clear</button>
+
+              <div class="period-row" role="group" aria-label="Period">
+                <button type="button" class="period-chip" data-hperiod="month" aria-pressed="false"><span class="p-full">This month</span><span class="p-short">Month</span></button>
+                <button type="button" class="period-chip" data-hperiod="3months" aria-pressed="false"><span class="p-full">Last 3 months</span><span class="p-short">3 months</span></button>
+                <button type="button" class="period-chip" data-hperiod="year" aria-pressed="false"><span class="p-full">This year</span><span class="p-short">Year</span></button>
+                <button type="button" class="period-chip active" data-hperiod="all" aria-pressed="true">All time</button>
+                <button type="button" class="ghost period-filters" id="toggleHistoryFiltersButton" aria-expanded="false" aria-controls="historyFilterPanel" aria-label="Filters" data-count="">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5L4 5z"/></svg>
+                  <span class="pf-label">Filters</span>
+                </button>
               </div>
+
+              <div id="historyFilterPanel" class="hidden">
+                <div class="history-filter-row">
+                  <div class="filter-field">
+                    <label for="historyPlayerFilter">Player</label>
+                    <select id="historyPlayerFilter">
+                      <option value="">All players</option>
+                    </select>
+                  </div>
+                  <button class="ghost" id="clearHistoryFiltersButton">Reset</button>
+                </div>
+              </div>
+
+              <select id="historyDateFilter" hidden aria-hidden="true" tabindex="-1">
+                <option value="all">All time</option>
+                <option value="month">This month</option>
+                <option value="3months">Last 3 months</option>
+                <option value="year">This year</option>
+              </select>
+
               <p class="history-filter-count" id="historyFilterCount"></p>
               <p class="history-filter-count" id="historyLoadNote" hidden></p>
             </div>
@@ -4263,7 +4584,7 @@
           </div>
         </section>
 
-        <section class="workspace-panel" id="leaderboardPanel" hidden>
+        <section class="workspace-panel" id="leaderboardPanel" data-lb-view="board" hidden>
           <div class="card">
             <div class="panel-title-row">
               <div>
@@ -4278,6 +4599,24 @@
               </span>
             </div>
 
+            <div class="seg lb-subtabs" role="group" aria-label="Leaderboard view">
+              <button type="button" class="active" data-lb-view="board" aria-pressed="true">Leaderboard</button>
+              <button type="button" data-lb-view="highlights" aria-pressed="false">Highlights</button>
+              <button type="button" data-lb-view="trends" aria-pressed="false">Trends</button>
+            </div>
+
+            <div class="period-row" role="group" aria-label="Period">
+              <button type="button" class="period-chip" data-period="month" aria-pressed="false"><span class="p-full">This month</span><span class="p-short">Month</span></button>
+              <button type="button" class="period-chip" data-period="30d" aria-pressed="false"><span class="p-full">Last 30 days</span><span class="p-short">30 days</span></button>
+              <button type="button" class="period-chip" data-period="year" aria-pressed="false"><span class="p-full">This year</span><span class="p-short">Year</span></button>
+              <button type="button" class="period-chip active" data-period="all" aria-pressed="true">All time</button>
+              <button type="button" class="ghost period-filters" id="toggleLbFiltersButton" aria-expanded="false" aria-controls="leaderboardFilterPanel" aria-label="Filters" data-count="">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5L4 5z"/></svg>
+                <span class="pf-label">Filters</span>
+              </button>
+            </div>
+
+            <div id="leaderboardFilterPanel" class="hidden">
             <div class="filter-bar">
               <div class="filter-field">
                 <label for="leaderboardStartDate">From date</label>
@@ -4306,10 +4645,16 @@
               </button>
 
               <button class="ghost" id="clearLeaderboardFilterButton">
-                All time
+                Reset
               </button>
             </div>
+            </div>
 
+            
+
+            </div>
+
+          <div class="card" id="leaderboardBoardCard">
             <div id="leaderboard">
               <p class="empty">Select a group to view player rankings.</p>
             </div>
@@ -4372,7 +4717,7 @@
         </div>
 
         <div id="ownedGroupsList">
-          <p class="empty">Loading your groups…</p>
+          <div class="skeleton" aria-busy="true"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
         </div>
 
         <div class="group-roster-section hidden" id="groupRosterSection">
@@ -4383,9 +4728,6 @@
                 Select a group to manage its regular players.
               </p>
             </div>
-            <span class="group-chip" id="manageRosterGroupChip">
-              No group selected
-            </span>
           </div>
 
           <div id="adminRosterControls" class="roster-add">
@@ -4416,7 +4758,6 @@
                 Accounts that can access this group. Player roster names are separate.
               </p>
             </div>
-            <span class="group-chip" id="manageUsersGroupChip">No group selected</span>
           </div>
           <div id="groupUsersList">
             <p class="empty">Select a group to view its users.</p>
@@ -4452,7 +4793,7 @@
           </div>
 
           <div id="adminConsoleList">
-            <p class="empty">Loading admins…</p>
+            <div class="skeleton" aria-busy="true"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
           </div>
         </div>
 
@@ -4472,6 +4813,18 @@
 
       const DRAFT_KEY = "poker-settle-game-draft";
 
+      // An invite QR opens the app with ?join=CODE. Remember it (the visitor
+      // may need to sign up first) and tidy the address bar.
+      {
+        try {
+          const invited = new URLSearchParams(window.location.search).get("join");
+          if (invited) {
+            localStorage.setItem("poker-vault-pending-join", invited.trim().toUpperCase().slice(0, 6));
+            window.history.replaceState(null, "", window.location.pathname + window.location.hash);
+          }
+        } catch {}
+      }
+
       let currentUser = null;
       let currentAppRole = "member";
       let groupMembershipIds = new Set();
@@ -4486,7 +4839,7 @@
       let activeGameOwnerId = null;
       let activeGameName = "";
       let tournamentNameSuffix = false;
-      const TREND_COLORS = ["#2e6b4a", "#c2573a", "#3b6fb6", "#b8892b", "#7a4fa3", "#2a8a8a", "#a33c66", "#6b7a2e"];
+      const TREND_COLORS = ["#2f9e6a", "#e0693f", "#4a86d6", "#d3a032", "#9b6bd0", "#2fb0b0", "#d1507f", "#8ea63a"];
       let trendPlayers = [];
       let trendSelected = null;
       let trendMode = "cumulative";
@@ -4498,6 +4851,13 @@
       let leaderboardEndDate = "";
       let leaderboardMinGames = 0;
       let expandedLeaderboardPlayerId = null;
+      let lbShowAll = false;
+      let lbPlayersCache = [];
+      const LB_PREVIEW = 10;
+      let lastClosedGame = null;
+      let lbLoadedGroupId = null;
+      let historyLoadedGroupId = null;
+      let undoCloseInFlight = false;
       let draftDirty = false;
       let lastSavedAt = null;
       // Money taken out of the pot for the open game: { id, description, amount }.
@@ -4529,6 +4889,39 @@
           .replaceAll(">", "&gt;")
           .replaceAll('"', "&quot;")
           .replaceAll("'", "&#039;");
+
+      function skeletonRows(count = 4) {
+        return `<div class="skeleton" aria-busy="true"><span class="sr-only">Loading…</span>${'<div class="skeleton-row"></div>'.repeat(count)}</div>`;
+      }
+
+      function showUndoToast(message, onUndo, duration = 12000) {
+        const region = document.getElementById("toastRegion");
+        if (!region) return;
+
+        const toast = document.createElement("div");
+        toast.className = "toast success toast-action";
+        toast.setAttribute("role", "status");
+
+        const text = document.createElement("span");
+        text.textContent = message;
+
+        const undo = document.createElement("button");
+        undo.type = "button";
+        undo.className = "secondary small";
+        undo.textContent = "Undo";
+
+        toast.append(text, undo);
+        region.appendChild(toast);
+
+        const timer = window.setTimeout(() => toast.remove(), duration);
+
+        undo.addEventListener("click", async () => {
+          window.clearTimeout(timer);
+          undo.disabled = true;
+          toast.remove();
+          await onUndo();
+        });
+      }
 
       // Errors replaced blocking alerts, so they linger longer than
       // confirmations to stay readable before auto-dismissing.
@@ -4956,7 +5349,6 @@
           currentUser && groups.some((group) => group.owner_id === currentUser.id)
         );
 
-        document.getElementById("adminConsoleButton")?.classList.toggle("hidden", !isSuperAdmin());
         document.getElementById("adminConsoleSection")?.classList.toggle("hidden", !superAdmin);
         // Manage Groups is navigation available to every signed-in user.
         // Permissions are enforced when protected actions are performed.
@@ -5023,7 +5415,6 @@
         const groupName = group ? group.name : "No group selected";
 
         document.getElementById("currentGroupChip").textContent = groupName;
-        document.getElementById("manageRosterGroupChip").textContent = groupName;
         document.getElementById("historyGroupChip").textContent = groupName;
         document.getElementById("leaderboardGroupChip").textContent = groupName;
 
@@ -5086,10 +5477,122 @@
         // Starting the next game should be available both when there has
         // never been a game and when the previous game was just closed.
         toggleHidden("startGameButton", false);
+        updateReopenButton();
 
         // Host copy about adding players and settling has nothing to do with a
         // member looking at an empty panel.
         toggleHidden("gameSubtitle", true);
+      }
+
+      function updateReopenButton() {
+        const show = Boolean(
+          lastClosedGame && lastClosedGame.groupId === selectedGroupId,
+        );
+        toggleHidden("reopenLastGameButton", !show);
+      }
+
+      // Reopening reverses a close: the game returns to draft, its saved
+      // settlement is removed, and the per-player buy-in log (deleted at close)
+      // is rebuilt from the stored totals so the table shows the same amounts.
+      async function undoCloseGame() {
+        const snap = lastClosedGame;
+
+        if (!snap || snap.groupId !== selectedGroupId || undoCloseInFlight) {
+          return;
+        }
+
+        undoCloseInFlight = true;
+
+        try {
+          const { data: existing, error: checkError } = await supabase
+            .from("games")
+            .select("id")
+            .eq("group_id", snap.groupId)
+            .eq("status", "draft")
+            .limit(1)
+            .maybeSingle();
+
+          if (checkError) {
+            console.error(checkError);
+            showToast(`Could not reopen the game: ${checkError.message}`, "error");
+            return;
+          }
+
+          if (existing) {
+            lastClosedGame = null;
+            updateReopenButton();
+            showToast(
+              "Another game is already in progress, so the closed game can't be reopened.",
+              "warning",
+            );
+            return;
+          }
+
+          const rows = snap.entries
+            .filter((entry) => entry.buyin > 0)
+            .map((entry) => ({
+              game_id: snap.gameId,
+              group_player_id: entry.playerId,
+              amount: entry.buyin,
+            }));
+
+          if (rows.length > 0) {
+            const { error } = await supabase
+              .from("game_buyin_transactions")
+              .insert(rows);
+
+            if (error) {
+              console.error(error);
+              showToast(`Could not reopen the game: ${error.message}`, "error");
+              return;
+            }
+          }
+
+          const undoPartialWork = async () => {
+            await supabase
+              .from("game_buyin_transactions")
+              .delete()
+              .eq("game_id", snap.gameId);
+          };
+
+          const { error: settleError } = await supabase
+            .from("settlements")
+            .delete()
+            .eq("game_id", snap.gameId);
+
+          if (settleError) {
+            console.error(settleError);
+            await undoPartialWork();
+            showToast(`Could not reopen the game: ${settleError.message}`, "error");
+            return;
+          }
+
+          const { error: statusError } = await supabase
+            .from("games")
+            .update({ status: "draft" })
+            .eq("id", snap.gameId);
+
+          if (statusError) {
+            console.error(statusError);
+            await undoPartialWork();
+            showToast(`Could not reopen the game: ${statusError.message}`, "error");
+            return;
+          }
+
+          lastClosedGame = null;
+          updateReopenButton();
+          hideNoLiveGame();
+          await loadCurrentLiveGame();
+
+          if (isAppAdmin() || isGroupAdmin()) {
+            await loadHistory();
+            await loadLeaderboard();
+          }
+
+          showToast("Game reopened. Close it again when you're ready.", "success");
+        } finally {
+          undoCloseInFlight = false;
+        }
       }
 
       function hideNoLiveGame() {
@@ -5129,6 +5632,7 @@
 
           managementCard?.classList.remove("hidden");
           renderOwnedGroups();
+          if (isSuperAdmin()) renderAdminConsole();
           return;
         }
 
@@ -5147,7 +5651,6 @@
 
       function updateAuthLayout() {
         const signedIn = Boolean(currentUser);
-        document.getElementById("adminConsoleSection")?.classList.add("hidden");
 
         const passwordOpen = signedIn && Boolean(passwordFlowMode);
 
@@ -5159,9 +5662,17 @@
           .getElementById("passwordCard")
           .classList.toggle("hidden", !passwordOpen);
 
+        const managementOpen =
+          signedIn &&
+          !passwordOpen &&
+          !document.getElementById("groupManagementCard").classList.contains("hidden");
+
         document
           .getElementById("dashboard")
           .classList.toggle("hidden", !signedIn || passwordOpen);
+
+        // Keep the tab bar; only the panels step aside for the manage page.
+        document.getElementById("dashboard").classList.toggle("manage-open", managementOpen);
 
         document
           .getElementById("signedInBanner")
@@ -5171,9 +5682,8 @@
           );
 
         if (!signedIn) {
-          document
-            .getElementById("groupManagementCard")
-            .classList.add("hidden");
+          const manageCard = document.getElementById("groupManagementCard");
+          if (!manageCard.classList.contains("hidden")) manageCard.classList.add("hidden");
         }
       }
 
@@ -5195,7 +5705,9 @@
         const authMessage = document.getElementById("authMessage");
 
         if (!currentUser) {
-          authMessage.textContent = "Sign in to create or join a poker group.";
+          authMessage.textContent = pendingJoinCode()
+            ? "You have been invited to a group. Sign in or create an account to join it."
+            : "Sign in to create or join a poker group.";
 
           groups = [];
           roster = [];
@@ -5222,6 +5734,7 @@
         // visibility so owners/admins get their permitted tabs while regular
         // members remain on the Live Game view only.
         updateRoleVisibility();
+        await handlePendingJoin();
       }
 
       async function signUp() {
@@ -5570,6 +6083,12 @@
               data-copy-group-code="${group.id}"
             >
               Copy code
+            </button><button
+              type="button"
+              class="ghost small"
+              data-show-group-qr="${group.id}"
+            >
+              QR code
             </button>`
                 : ""
             }
@@ -5633,7 +6152,6 @@
         const card = document.getElementById("groupManagementCard");
         const usersSection = document.getElementById("groupUsersSection");
         const rosterSection = document.getElementById("groupRosterSection");
-        const adminSection = document.getElementById("adminConsoleSection");
 
         if (
           !forceRefresh &&
@@ -5649,13 +6167,11 @@
         renderGroups();
         updateSelectedGroupLabels();
         rosterSection?.classList.add("hidden");
-        adminSection?.classList.add("hidden");
         usersSection.classList.remove("hidden");
-        document.getElementById("manageUsersGroupChip").textContent = group.name;
         document.getElementById("manageUsersTitle").textContent = `${group.name} users`;
 
         const list = document.getElementById("groupUsersList");
-        list.innerHTML = '<p class="empty">Loading users…</p>';
+        list.innerHTML = '<div class="skeleton" aria-busy="true"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>';
         card.classList.remove("hidden");
 
         const { data, error } = await supabase.rpc("get_group_users_for_admin", {
@@ -5756,6 +6272,7 @@
 
         showToast(makeAdmin ? "User is now an Admin." : "Admin access removed.", "success");
         if (selectedGroupId) await openUsersManager(selectedGroupId, true);
+        await renderAdminConsole();
       }
 
       async function openRosterManager(groupId) {
@@ -5784,7 +6301,6 @@
         updateSelectedGroupLabels();
 
         card.classList.remove("hidden");
-        document.getElementById("adminConsoleSection")?.classList.add("hidden");
         rosterSection?.classList.remove("hidden");
 
         rosterSection?.scrollIntoView({
@@ -6076,6 +6592,10 @@
       }
 
       async function groupChanged() {
+        lastClosedGame = null;
+        lbLoadedGroupId = null;
+        historyLoadedGroupId = null;
+        updateReopenButton();
         noLiveGameReason = null;
         showGameStateLoading();
         resetActiveGameState();
@@ -6144,6 +6664,13 @@
 
       // Two-letter monogram; gives each roster row a fixed anchor point so a
       // long list of names still scans as a column.
+      function chipColorFor(name) {
+        const palette = ["#17525c", "#a8472f", "#2e6b4a", "#6b4d9a", "#9a7430", "#2a5f9e", "#8a3a63"];
+        let hash = 0;
+        for (const ch of String(name || "")) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+        return palette[hash % palette.length];
+      }
+
       function initialsOf(name) {
         const parts = String(name || "")
           .trim()
@@ -6206,7 +6733,7 @@
             .map(
               (player) => `
           <div class="roster-row">
-            <span class="roster-avatar" aria-hidden="true">${escapeHtml(
+            <span class="roster-avatar" aria-hidden="true" style="--chip:${chipColorFor(player.name)}">${escapeHtml(
               initialsOf(player.name),
             )}</span>
             <span class="roster-name">${escapeHtml(player.name)}</span>
@@ -7407,6 +7934,16 @@
 
         const finalPayments = calculatePayments();
 
+        // Remember what was closed so it can be reopened after a mis-tap.
+        lastClosedGame = {
+          gameId,
+          groupId: selectedGroupId,
+          entries: gameEntries.map((entry) => ({
+            playerId: entry.playerId,
+            buyin: toNumber(entry.buyin),
+          })),
+        };
+
         await loadHistory();
         await loadLeaderboard();
 
@@ -7417,10 +7954,7 @@
         // game remains available in History, including its saved settlement.
         showNoLiveGame("none");
 
-        showToast(
-          "Game closed. History and leaderboard were updated.",
-          "success",
-        );
+        showUndoToast("Game closed. History and leaderboard were updated.", undoCloseGame);
 
         return gameId;
       }
@@ -7490,6 +8024,11 @@
 
         const groupId = selectedGroupId;
 
+        if (historyLoadedGroupId !== groupId) {
+          document.getElementById("gameHistory").innerHTML = skeletonRows(4);
+        }
+
+
         // First batch is small so the tab opens quickly.
         const first = await fetchHistoryBatch(groupId, 0, HISTORY_FIRST_BATCH - 1);
         if (token !== historyLoadToken) return;
@@ -7503,6 +8042,7 @@
         }
 
         historyGames = first.games;
+        historyLoadedGroupId = groupId;
         populateHistoryPlayerFilter(historyGames);
         applyHistoryFilters();
 
@@ -7603,6 +8143,7 @@
       }
 
       function applyHistoryFilters(resetPage = true) {
+        syncHistoryFilterUI();
         const search = (document.getElementById("historySearch")?.value || "").trim().toLowerCase();
         const playerId = document.getElementById("historyPlayerFilter")?.value || "";
         const dateFilter = document.getElementById("historyDateFilter")?.value || "all";
@@ -7964,6 +8505,11 @@
           return;
         }
 
+        if (lbLoadedGroupId !== selectedGroupId) {
+          const lbElement = document.getElementById("leaderboard");
+          if (lbElement) lbElement.innerHTML = skeletonRows(5);
+        }
+
         const { data: rosterPlayers, error: rosterError } = await supabase
           .from("group_players")
           .select("id")
@@ -8108,6 +8654,7 @@
             };
           });
 
+        lbLoadedGroupId = selectedGroupId;
         renderLeaderboard(players);
       }
 
@@ -8163,6 +8710,7 @@
       }
 
       function renderLeaderboard(players) {
+        lbPlayersCache = players;
         renderLeaderboardTrends(players);
         document.querySelector("#leaderboardPanel .subtitle").textContent =
           `Net-profit rankings for ${leaderboardPeriodLabel()} in the selected group.`;
@@ -8222,7 +8770,14 @@
           0,
         );
 
-        const rows = players
+        const expandedIdx = players.findIndex(
+          (pl) => String(pl.player_id) === String(expandedLeaderboardPlayerId),
+        );
+        const collapsible = players.length > LB_PREVIEW;
+        const showAll = !collapsible || lbShowAll || expandedIdx >= LB_PREVIEW;
+        const visiblePlayers = showAll ? players : players.slice(0, LB_PREVIEW);
+
+        const rows = visiblePlayers
           .map((player) => {
             const net = Number(player.net_result);
             const netClass = net >= 0 ? "positive" : "negative";
@@ -8271,6 +8826,19 @@
           </div>
 
           ${rows}
+        </div>
+
+        <div class="lb-more">
+          <button type="button" class="secondary small" data-lb-copy>Copy standings</button>
+          ${
+            collapsible
+              ? `<button type="button" class="secondary small" data-lb-toggle-all>${
+                  showAll
+                    ? `Show top ${LB_PREVIEW} only`
+                    : `Show all ${players.length} players`
+                }</button>`
+              : ""
+          }
         </div>
       `;
 
@@ -9371,6 +9939,8 @@
           return;
         }
 
+        lastClosedGame = null;
+        updateReopenButton();
         activeGameId = createdGame.id;
         activeGameOwnerId = createdGame.created_by;
         activeGameName = createdGame.name || "";
@@ -9429,6 +9999,46 @@
             "error",
           );
           showNoLiveGame("none");
+        }
+      }
+
+      async function copyStandings() {
+        const players = lbPlayersCache;
+
+        if (!players.length) {
+          showToast("No standings to copy yet.", "warning");
+          return;
+        }
+
+        const group = selectedGroup();
+        const medals = ["🥇", "🥈", "🥉"];
+
+        const lines = players.map((player) => {
+          const games = Number(player.games_played) || 0;
+          const mark =
+            player.profit_rank <= 3
+              ? medals[player.profit_rank - 1]
+              : `${player.profit_rank}.`;
+
+          return `${mark} ${player.player_name}  ${signedMoney(Number(player.net_result))} (${games} ${games === 1 ? "game" : "games"})`;
+        });
+
+        const text = [
+          `♠ ${group ? group.name : "Poker Vault"} standings`,
+          `Net profit · ${leaderboardPeriodLabel()}`,
+          "",
+          ...lines,
+        ].join("\n");
+
+        const copied = await copyTextToClipboard(text);
+
+        if (copied) {
+          showToast("Standings copied.", "success");
+        } else {
+          window.prompt(
+            "Automatic copy is blocked. Select the standings below and copy them:",
+            text,
+          );
         }
       }
 
@@ -9569,22 +10179,17 @@
         await signOut();
       });
 
-      document.getElementById("adminConsoleButton")?.addEventListener("click", async () => {
-        closeBannerMenu();
-        await openAdminConsole();
-      });
-
       document.getElementById("manageGroupsButton").addEventListener("click", () => {
         if (!currentUser) {
           closeBannerMenu();
           return;
         }
 
-        document.getElementById("adminConsoleSection")?.classList.add("hidden");
         closeBannerMenu();
 
         const card = document.getElementById("groupManagementCard");
         card.classList.remove("hidden");
+        if (isSuperAdmin()) renderAdminConsole();
         document.getElementById("groupRosterSection")?.classList.add("hidden");
         document.getElementById("groupUsersSection")?.classList.add("hidden");
 
@@ -9681,6 +10286,10 @@
       document
         .getElementById("joinGroupButton")
         .addEventListener("click", joinGroup);
+
+      document
+        .getElementById("groupSelect")
+        .addEventListener("change", (event) => event.target.blur());
 
       document
         .getElementById("groupSelect")
@@ -10326,24 +10935,12 @@ document
       document.getElementById("clearHistoryFiltersButton")?.addEventListener("click", clearHistoryFilters);
 
 
-      async function openAdminConsole() {
-        if (!currentUser || !isSuperAdmin()) {
-          document.getElementById("adminConsoleSection")?.classList.add("hidden");
-          showToast("Only the Super Admin can open Admin Console.", "error");
-          return;
-        }
-
-        const card = document.getElementById("groupManagementCard");
-        const usersSection = document.getElementById("groupUsersSection");
-        const rosterSection = document.getElementById("groupRosterSection");
-        const adminSection = document.getElementById("adminConsoleSection");
+      // Fills the PokerVault Admins list inside the Manage groups page (Super Admin only).
+      async function renderAdminConsole() {
         const list = document.getElementById("adminConsoleList");
+        if (!currentUser || !isSuperAdmin() || !list) return;
 
-        card.classList.remove("hidden");
-        usersSection?.classList.add("hidden");
-        rosterSection?.classList.add("hidden");
-        adminSection?.classList.remove("hidden");
-        list.innerHTML = '<p class="empty">Loading admins…</p>';
+        list.innerHTML = '<div class="skeleton" aria-busy="true"><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div>';
 
         const { data, error } = await supabase.rpc(
           "get_all_poker_admins_for_super_admin"
@@ -10404,13 +11001,35 @@ document
           button.addEventListener("click", async () => {
             if (!confirm("Remove Admin access from this user?")) return;
             await setUserAdminRole(button.dataset.consoleRemoveAdmin, false);
-            await openAdminConsole();
+            await renderAdminConsole();
           });
         });
 
-        adminSection.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
+
+      // Manage groups is a full page (like Change password):
+      // opening the card hides the dashboard, and Done brings it back.
+      new MutationObserver(() => {
+        updateAuthLayout();
+        const open = !document.getElementById("groupManagementCard").classList.contains("hidden");
+        if (open) {
+          window.scrollTo(0, 0);
+          // No content tab is "current" while the manage page is showing.
+          document.querySelectorAll(".workspace-tab.active").forEach((tab) => {
+            if (tab.id !== "manageGroupsTab") tab.classList.remove("active");
+          });
+        } else {
+          const panel = document.querySelector(".workspace-panel.active");
+          if (!panel) showPanel("gamePanel");
+          else document.querySelectorAll(".workspace-tab").forEach((tab) => {
+            tab.classList.toggle("active", tab.dataset.panel === panel.id);
+          });
+        }
+      }).observe(document.getElementById("groupManagementCard"), {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
 
       // Phone-first UI: History view switch and collapsible Expenses section.
       document.querySelectorAll("[data-history-view]").forEach((button) => {
@@ -10791,6 +11410,432 @@ document
         drawLeaderboardTrends();
       });
 
+      document.querySelectorAll("button[data-lb-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("leaderboardPanel").dataset.lbView = button.dataset.lbView;
+          document.querySelectorAll("button[data-lb-view]").forEach((other) => {
+            const on = other === button;
+            other.classList.toggle("active", on);
+            other.setAttribute("aria-pressed", String(on));
+          });
+        });
+      });
+
+      document.getElementById("leaderboard")?.addEventListener("click", (event) => {
+        if (event.target.closest("[data-lb-copy]")) { copyStandings(); return; }
+        if (!event.target.closest("[data-lb-toggle-all]")) return;
+        lbShowAll = !lbShowAll;
+        if (!lbShowAll) expandedLeaderboardPlayerId = null;
+        renderLeaderboard(lbPlayersCache);
+      });
+
+      document.getElementById("reopenLastGameButton")?.addEventListener("click", undoCloseGame);
+
+      {
+        const KEY = "poker-vault-theme";
+        const MODES = ["auto", "light", "dark"];
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const readMode = () => {
+          try { return localStorage.getItem(KEY) || "auto"; } catch { return "auto"; }
+        };
+        const applyTheme = () => {
+          const mode = readMode();
+          const dark = mode === "dark" || (mode === "auto" && media.matches);
+          document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+          document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#0b1517" : "#0f3a42");
+          const label = document.getElementById("themeToggleLabel");
+          if (label) label.textContent = `Theme: ${mode[0].toUpperCase()}${mode.slice(1)}`;
+        };
+        document.getElementById("themeToggleButton")?.addEventListener("click", () => {
+          const next = MODES[(MODES.indexOf(readMode()) + 1) % MODES.length];
+          try { localStorage.setItem(KEY, next); } catch {}
+          applyTheme();
+        });
+        media.addEventListener?.("change", applyTheme);
+        applyTheme();
+      }
+
+      function pendingJoinCode() {
+        try { return localStorage.getItem("poker-vault-pending-join") || ""; } catch { return ""; }
+      }
+
+      async function handlePendingJoin() {
+        const code = pendingJoinCode();
+        if (!code || !currentUser) return;
+
+        try { localStorage.removeItem("poker-vault-pending-join"); } catch {}
+
+        const confirmed = await confirmModal({
+          title: "Join this group?",
+          body: `You were invited with group code ${code}.`,
+          confirmLabel: "Join group",
+        });
+        if (!confirmed) return;
+
+        const { data, error } = await supabase.rpc("join_poker_group", { code_to_join: code });
+
+        if (error) {
+          console.error(error);
+          showToast(error.message, "error");
+          return;
+        }
+
+        selectedGroupId = data;
+        localStorage.setItem("poker-settle-selected-group", selectedGroupId);
+        document.getElementById("groupManagementCard")?.classList.add("hidden");
+        await loadGroups();
+        showPanel("gamePanel");
+        showToast("You joined the group.", "success");
+      }
+
+      // ---- Period chips and collapsible filters ----
+      function localISODate(date) {
+        const offset = date.getTimezoneOffset();
+        return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 10);
+      }
+
+      function periodRange(key) {
+        const now = new Date();
+        if (key === "month") return { start: localISODate(new Date(now.getFullYear(), now.getMonth(), 1)), end: "" };
+        if (key === "30d") {
+          const from = new Date(now);
+          from.setDate(from.getDate() - 30);
+          return { start: localISODate(from), end: "" };
+        }
+        if (key === "year") return { start: `${now.getFullYear()}-01-01`, end: "" };
+        return { start: "", end: "" };
+      }
+
+      function activePeriodKey() {
+        return (
+          ["all", "month", "30d", "year"].find((key) => {
+            const range = periodRange(key);
+            return range.start === leaderboardStartDate && range.end === leaderboardEndDate;
+          }) || null
+        );
+      }
+
+      function syncLeaderboardFilterUI() {
+        document.getElementById("leaderboardStartDate").value = leaderboardStartDate;
+        document.getElementById("leaderboardEndDate").value = leaderboardEndDate;
+        document.getElementById("leaderboardMinGames").value = leaderboardMinGames > 0 ? leaderboardMinGames : "";
+
+        const key = activePeriodKey();
+        document.querySelectorAll("[data-period]").forEach((button) => {
+          const on = button.dataset.period === key;
+          button.classList.toggle("active", on);
+          button.setAttribute("aria-pressed", String(on));
+        });
+
+        const count = (leaderboardMinGames > 0 ? 1 : 0) + (key ? 0 : 1);
+        const filtersButton = document.getElementById("toggleLbFiltersButton");
+        filtersButton.dataset.count = count ? String(count) : "";
+        filtersButton.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
+      }
+
+      document.querySelectorAll("[data-period]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const range = periodRange(button.dataset.period);
+          leaderboardStartDate = range.start;
+          leaderboardEndDate = range.end;
+          syncLeaderboardFilterUI();
+          await loadLeaderboard();
+        });
+      });
+
+      ["applyLeaderboardFilterButton", "clearLeaderboardFilterButton"].forEach((id) =>
+        document.getElementById(id).addEventListener("click", syncLeaderboardFilterUI),
+      );
+
+      document.getElementById("toggleLbFiltersButton").addEventListener("click", (event) => {
+        const hidden = document.getElementById("leaderboardFilterPanel").classList.toggle("hidden");
+        event.currentTarget.setAttribute("aria-expanded", String(!hidden));
+      });
+
+      syncLeaderboardFilterUI();
+
+      // ---- Group invite QR ----
+      function groupInviteUrl(code) {
+        return `${window.location.href.split(/[?#]/)[0]}?join=${encodeURIComponent(code)}`;
+      }
+
+      async function qrSvgFor(text) {
+        const mod = await import("https://esm.sh/qrcode-generator@1.4.4");
+        const qrcode = mod.default || mod;
+        const qr = qrcode(0, "M");
+        qr.addData(text);
+        qr.make();
+
+        const count = qr.getModuleCount();
+        const quiet = 2;
+        let path = "";
+
+        for (let row = 0; row < count; row++) {
+          for (let col = 0; col < count; col++) {
+            if (qr.isDark(row, col)) path += `M${col + quiet} ${row + quiet}h1v1h-1z`;
+          }
+        }
+
+        const size = count + quiet * 2;
+        return `<svg viewBox="0 0 ${size} ${size}" shape-rendering="crispEdges" role="img" aria-label="QR code to join the group"><rect width="${size}" height="${size}" fill="#fff"/><path d="${path}" fill="#000"/></svg>`;
+      }
+
+      async function showGroupQr(groupId) {
+        const group = groups.find((item) => item.id === groupId);
+
+        if (!group || group.owner_id !== currentUser?.id) {
+          showToast("Only the group creator can share this code.", "error");
+          return;
+        }
+
+        const overlay = document.getElementById("qrOverlay");
+        const box = document.getElementById("qrBox");
+        const url = groupInviteUrl(group.join_code);
+
+        overlay.dataset.url = url;
+        overlay.dataset.code = group.join_code;
+        document.getElementById("qrGroupName").textContent = group.name;
+        document.getElementById("qrCodeText").textContent = group.join_code;
+        box.textContent = "Loading…";
+        overlay.hidden = false;
+
+        try {
+          box.innerHTML = await qrSvgFor(url);
+        } catch (error) {
+          console.error("Could not build QR code:", error);
+          box.textContent = "Could not create the QR code. Share the code below instead.";
+        }
+      }
+
+      function closeGroupQr() {
+        document.getElementById("qrOverlay").hidden = true;
+      }
+
+      document.getElementById("ownedGroupsList").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-show-group-qr]");
+        if (button) showGroupQr(button.dataset.showGroupQr);
+      });
+      document.getElementById("closeQrButton").addEventListener("click", closeGroupQr);
+      document.getElementById("qrOverlay").addEventListener("click", (event) => {
+        if (event.target.id === "qrOverlay") closeGroupQr();
+      });
+      document.getElementById("qrCopyLinkButton").addEventListener("click", async () => {
+        const ok = await copyTextToClipboard(document.getElementById("qrOverlay").dataset.url || "");
+        showToast(ok ? "Invite link copied." : "Could not copy automatically.", ok ? "success" : "error");
+      });
+      document.getElementById("qrCopyCodeButton").addEventListener("click", async () => {
+        const ok = await copyTextToClipboard(document.getElementById("qrOverlay").dataset.code || "");
+        showToast(ok ? "Group code copied." : "Could not copy automatically.", ok ? "success" : "error");
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeGroupQr();
+      });
+
+      // ---- Tournament blind timer ----
+      // Kept per game on this device. It stores an end time rather than a
+      // counter, so it stays accurate if the phone sleeps or the tab is hidden.
+      {
+        const $ = (id) => document.getElementById(id);
+        const PRESET = [[25, 50], [50, 100], [75, 150], [100, 200], [150, 300], [200, 400], [300, 600], [400, 800], [500, 1000], [600, 1200], [800, 1600], [1000, 2000]];
+        const blindsFor = (level) => {
+          if (level <= PRESET.length) return PRESET[level - 1];
+          let [small] = PRESET[PRESET.length - 1];
+          for (let i = PRESET.length; i < level; i++) small = Math.round((small * 1.5) / 100) * 100;
+          return [small, small * 2];
+        };
+        const fmtBlinds = (level) => blindsFor(level).map((n) => n.toLocaleString("en-US")).join(" / ");
+        const fresh = (gameId) => ({ gameId, level: 1, minutes: 15, running: false, endAt: 0, remainingMs: 15 * 60000, sound: true });
+
+        let st = fresh(null);
+        let audioCtx = null;
+        let wakeLock = null;
+
+        const fullMs = () => st.minutes * 60000;
+        const keyFor = (id) => `poker-vault-blinds-${id}`;
+        const save = () => {
+          if (!st.gameId) return;
+          try { localStorage.setItem(keyFor(st.gameId), JSON.stringify(st)); } catch {}
+        };
+        const load = (id) => {
+          st = fresh(id);
+          if (id) {
+            try {
+              const raw = localStorage.getItem(keyFor(id));
+              if (raw) st = { ...st, ...JSON.parse(raw), gameId: id };
+            } catch {}
+          }
+          $("blindMinutes").value = String(st.minutes);
+        };
+
+        const ensureAudio = () => {
+          try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === "suspended") audioCtx.resume();
+          } catch {}
+        };
+        const bell = () => {
+          if (!st.sound) return;
+          try { navigator.vibrate?.([200, 100, 200]); } catch {}
+          if (!audioCtx) return;
+          const now = audioCtx.currentTime;
+          [0, 0.35, 0.7].forEach((offset, index) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = "sine";
+            osc.frequency.value = index === 2 ? 1175 : 880;
+            gain.gain.setValueAtTime(0.0001, now + offset);
+            gain.gain.exponentialRampToValueAtTime(0.4, now + offset + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.9);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(now + offset);
+            osc.stop(now + offset + 1);
+          });
+        };
+
+        const wake = async () => {
+          try {
+            if (st.running && "wakeLock" in navigator && !wakeLock) {
+              wakeLock = await navigator.wakeLock.request("screen");
+              wakeLock.addEventListener("release", () => { wakeLock = null; });
+            }
+          } catch {}
+        };
+        const unwake = () => {
+          try { wakeLock?.release(); } catch {}
+          wakeLock = null;
+        };
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") wake();
+        });
+
+        const draw = () => {
+          const ms = st.running ? Math.max(0, st.endAt - Date.now()) : st.remainingMs;
+          const total = Math.ceil(ms / 1000);
+          const clock = $("blindClock");
+          clock.textContent = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+          clock.classList.toggle("low", st.running && total <= 60);
+          clock.classList.toggle("paused", !st.running);
+          $("blindLevelLabel").textContent = `Level ${st.level}`;
+          const blindsEl = $("blindBlinds");
+          if (blindsEl.dataset.level !== String(st.level)) {
+            const [small, big] = blindsFor(st.level);
+            const short = (n) => (n >= 1000 ? `${+(n / 1000).toFixed(1)}K` : String(n));
+            blindsEl.innerHTML = `<span class="chip chip-sm" style="--chip:#2e7d5b" title="Small blind">${short(small)}</span><span class="chip chip-sm" style="--chip:#a8472f" title="Big blind">${short(big)}</span>`;
+            blindsEl.setAttribute("aria-label", `Blinds ${fmtBlinds(st.level)}`);
+            blindsEl.dataset.level = String(st.level);
+          }
+          $("blindNext").textContent = `Next: ${fmtBlinds(st.level + 1)}`;
+          $("blindStartButton").textContent = st.running ? "Pause" : st.remainingMs < fullMs() || st.level > 1 ? "Resume" : "Start";
+          $("blindSoundButton").textContent = `Bell: ${st.sound ? "On" : "Off"}`;
+        };
+
+        const tick = () => {
+          if (activeGameId !== st.gameId) {
+            unwake();
+            load(activeGameId);
+          }
+
+          if (st.running) {
+            let advanced = false;
+            let guard = 0;
+            while (st.endAt <= Date.now() && guard++ < 100) {
+              st.level += 1;
+              st.endAt += fullMs();
+              advanced = true;
+            }
+            if (advanced) {
+              save();
+              bell();
+              showToast(`Level ${st.level}: blinds ${fmtBlinds(st.level)}`, "success");
+            }
+          }
+
+          if (!$("tournamentSection").classList.contains("hidden")) draw();
+        };
+        window.setInterval(tick, 250);
+
+        const setLevel = (level) => {
+          st.level = Math.max(1, level);
+          st.remainingMs = fullMs();
+          if (st.running) st.endAt = Date.now() + fullMs();
+          save();
+          draw();
+        };
+
+        $("blindStartButton").addEventListener("click", () => {
+          ensureAudio();
+          if (st.running) {
+            st.remainingMs = Math.max(0, st.endAt - Date.now());
+            st.running = false;
+            unwake();
+          } else {
+            if (st.remainingMs <= 0) st.remainingMs = fullMs();
+            st.endAt = Date.now() + st.remainingMs;
+            st.running = true;
+            wake();
+          }
+          save();
+          draw();
+        });
+        $("blindNextButton").addEventListener("click", () => setLevel(st.level + 1));
+        $("blindPrevButton").addEventListener("click", () => setLevel(st.level - 1));
+        $("blindResetButton").addEventListener("click", () => {
+          st.level = 1;
+          st.remainingMs = fullMs();
+          st.running = false;
+          unwake();
+          save();
+          draw();
+        });
+        $("blindMinutes").addEventListener("change", (event) => {
+          st.minutes = Number(event.target.value) || 15;
+          st.remainingMs = fullMs();
+          if (st.running) st.endAt = Date.now() + fullMs();
+          save();
+          draw();
+        });
+        $("blindSoundButton").addEventListener("click", () => {
+          st.sound = !st.sound;
+          ensureAudio();
+          save();
+          draw();
+          if (st.sound) bell();
+        });
+      }
+
+      // ---- History: period chips + collapsible filters ----
+      function syncHistoryFilterUI() {
+        const dateValue = document.getElementById("historyDateFilter")?.value || "all";
+
+        document.querySelectorAll("[data-hperiod]").forEach((button) => {
+          const on = button.dataset.hperiod === dateValue;
+          button.classList.toggle("active", on);
+          button.setAttribute("aria-pressed", String(on));
+        });
+
+        const count = document.getElementById("historyPlayerFilter")?.value ? 1 : 0;
+        const toggle = document.getElementById("toggleHistoryFiltersButton");
+        if (!toggle) return;
+        toggle.dataset.count = count ? String(count) : "";
+        toggle.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
+      }
+
+      document.querySelectorAll("[data-hperiod]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("historyDateFilter").value = button.dataset.hperiod;
+          applyHistoryFilters(true);
+        });
+      });
+
+      document.getElementById("toggleHistoryFiltersButton").addEventListener("click", (event) => {
+        const hidden = document.getElementById("historyFilterPanel").classList.toggle("hidden");
+        event.currentTarget.setAttribute("aria-expanded", String(!hidden));
+      });
+
+      document.getElementById("clearHistoryFiltersButton")?.addEventListener("click", syncHistoryFilterUI);
+      syncHistoryFilterUI();
+
       // Player profile sheet
       function openPlayerProfile(playerId) {
         const p = trendPlayers.find((x) => String(x.player_id) === String(playerId));
@@ -10842,7 +11887,24 @@ document
         if (event.key === "Escape") closePlayerProfile();
       });
 </script>
-  <div class="profile-overlay" id="playerProfile" hidden>
+  <div class="profile-overlay" id="qrOverlay" hidden>
+      <div class="profile-sheet" role="dialog" aria-modal="true" aria-labelledby="qrGroupName">
+        <div class="panel-title-row">
+          <div>
+            <h2 id="qrGroupName"></h2>
+            <p class="subtitle">Scan to join this group. They will be asked to sign in or create an account first.</p>
+          </div>
+          <button type="button" class="secondary small" id="closeQrButton">Close</button>
+        </div>
+        <div class="qr-box" id="qrBox">Loading…</div>
+        <div class="qr-code-text" id="qrCodeText"></div>
+        <div class="qr-actions">
+          <button type="button" class="secondary small" id="qrCopyLinkButton">Copy invite link</button>
+          <button type="button" class="ghost small" id="qrCopyCodeButton">Copy code</button>
+        </div>
+      </div>
+    </div>
+    <div class="profile-overlay" id="playerProfile" hidden>
       <div class="profile-sheet" role="dialog" aria-modal="true" aria-labelledby="profileName">
         <div class="panel-title-row">
           <div>

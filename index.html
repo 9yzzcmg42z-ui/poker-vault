@@ -4017,6 +4017,79 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 #historyFilterPanel{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 #historyFilterPanel .history-filter-row{grid-template-columns:minmax(0,1fr) auto;margin-top:0}
 #historyFilterPanel .history-filter-row button{grid-column:auto;width:auto}
+.quick-rebuy{height:46px;padding:0 12px;border-radius:14px;font-variant-numeric:tabular-nums lining-nums;white-space:nowrap}
+@media (max-width:480px){.quick-rebuy{height:46px;padding:0 9px}}
+
+/* Phone player rows: name, then money, then a full-width action row */
+@media (max-width:520px){
+  .compact-game-row,.compact-game-row.view-only{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .compact-game-row > .compact-actions{grid-column:1/-1;justify-content:flex-end;gap:10px;margin-top:4px}
+  .compact-actions .quick-rebuy{flex:1 1 auto}
+  .compact-money{font-size:1.05rem}
+}
+.t-extras{grid-column:1/-1;display:flex;gap:8px}
+.t-extras button{flex:1}
+
+/* Compact one-line player rows on phones */
+@media (max-width: 640px) {
+  .compact-list-head,
+  .compact-list-head.view-only {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 60px 60px 64px;
+    gap: 8px;
+    padding: 0 12px 6px;
+  }
+  .compact-list-head.view-only { grid-template-columns: minmax(0, 1fr) 60px 60px; }
+
+  .compact-game-list .compact-game-row:not(.editing),
+  .compact-game-list .compact-game-row.view-only:not(.editing) {
+    grid-template-columns: minmax(0, 1fr) 60px 60px 64px;
+    gap: 8px;
+    row-gap: 0;
+    padding: 8px 12px;
+    align-items: center;
+  }
+  .compact-game-list .compact-game-row.view-only:not(.editing) {
+    grid-template-columns: minmax(0, 1fr) 60px 60px;
+  }
+
+  .compact-game-row:not(.editing) > .compact-player-name {
+    grid-column: auto;
+    font-size: 1rem;
+  }
+  .compact-game-row:not(.editing) .compact-money {
+    text-align: right;
+    font-size: .92rem;
+  }
+  .compact-game-row:not(.editing) .compact-money small { display: none; }
+
+  .compact-game-row:not(.editing) > .compact-actions {
+    grid-column: auto;
+    margin: 0;
+    gap: 0;
+  }
+  .compact-game-row:not(.editing) .quick-rebuy {
+    width: 100%;
+    height: 34px;
+    padding: 0 6px;
+    font-size: .8rem;
+    border-radius: 10px;
+  }
+}
+
+/* Red x: removing a buy-in deletes it */
+.editing-history .buyin-remove-button,
+.editing-history [data-remove-buyin]{
+  color:var(--loss);
+  background:var(--red-soft);
+  border:1px solid #e0b3a7 !important;
+}
+.editing-history .buyin-remove-button:hover,
+.editing-history [data-remove-buyin]:hover{
+  background:var(--loss);
+  border-color:var(--loss) !important;
+  color:#fff;
+}
 </style>
   </head>
 
@@ -4199,6 +4272,10 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
                   id="startGameButton"
                 >
                   Start a game
+                </button>
+
+                <button type="button" class="secondary" id="startSameGameButton">
+                  Start with same players
                 </button>
 
                 <button
@@ -4469,6 +4546,10 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
                   <label for="customPayout">Percentages</label>
                   <input id="customPayout" type="text" value="50, 30, 20" placeholder="50, 30, 20" autocomplete="off" />
                 </div>
+                <div class="two-columns" style="margin-top: 14px">
+                  <div><label for="tourRebuyAmount">Rebuy amount ($)</label><input id="tourRebuyAmount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Default buy-in" /></div>
+                  
+                </div>
                 <div id="tournamentPlayers"></div>
                 <p class="save-status" id="tournamentStatus" aria-live="polite"></p>
                 <button type="button" class="secondary small" id="applyPayoutsButton">
@@ -4495,6 +4576,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
                 class="actions settle-copy hidden"
                 id="copySettlementActions"
               >
+                <button class="secondary" id="shareImageButton">Share as image</button>
                 <button class="secondary" id="copyButton">
                   Copy settlement
                 </button>
@@ -5179,6 +5261,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         const element = document.getElementById(id);
 
         if (element) element.classList.toggle("hidden", hidden);
+        if (id === "startGameButton") document.getElementById("startSameGameButton")?.classList.toggle("hidden", hidden);
       };
 
       function setSaveStatus(message, type = "") {
@@ -6785,7 +6868,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         }
 
         input.value = "";
-        showToast(`${escapeHtml(name)} added to the roster.`, "success");
+        showToast(`${name} added to the roster.`, "success");
         await loadRoster();
         await loadLeaderboard();
       }
@@ -6905,6 +6988,8 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         // $0.00.
         const gameId = await saveGame(false, false);
 
+        if (gameId) rememberDefaultBuyin();
+
         if (gameId && defaultBuyin > 0) {
           const { error } = await supabase
             .from("game_buyin_transactions")
@@ -6948,6 +7033,49 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
       const ICON_ARROW = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
       const ICON_CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.2 8.6 6.3 11.8 12.8 4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+      function rebuyAmount() {
+        const value = toNumber(document.getElementById("defaultBuyin")?.value);
+        return value > 0 ? value : 10;
+      }
+
+      function rebuyLabel() {
+        const amount = rebuyAmount();
+        return Number.isInteger(amount) ? `$${amount}` : money(amount);
+      }
+
+      const rebuysInFlight = new Set();
+
+      async function quickRebuy(playerId, customAmount) {
+        if (!canEditActiveGame() || rebuysInFlight.has(playerId)) return;
+
+        const entry = gameEntries.find((item) => item.playerId === playerId);
+        if (!entry) return;
+
+        rebuysInFlight.add(playerId);
+
+        try {
+          const amount = customAmount ?? rebuyAmount();
+          const gameId = currentGameId || (await saveGame(false, false));
+          if (!gameId) return;
+
+          const { error } = await supabase
+            .from("game_buyin_transactions")
+            .insert({ game_id: gameId, group_player_id: playerId, amount });
+
+          if (error) {
+            console.error(error);
+            showToast(`Could not add buy-in: ${error.message}`, "error");
+            return;
+          }
+
+          await loadBuyinTransactions(gameId);
+          await saveGame(false, false);
+          showToast(`${entry.name}: +${money(amount)} buy-in`, "success");
+        } finally {
+          rebuysInFlight.delete(playerId);
+        }
+      }
 
       function renderGameEntries() {
         const container = document.getElementById("gameEntries");
@@ -7087,10 +7215,9 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
             <button
               type="button"
               class="compact-player-name"
-              title="Show buy-in history"
-              aria-label="Show buy-in history for ${escapeHtml(entry.name)}"
-              aria-expanded="${entry.showBuyinHistory ? "true" : "false"}"
-              data-buyin-history="${entry.playerId}"
+              title="Edit ${escapeHtml(entry.name)}"
+              aria-label="Edit ${escapeHtml(entry.name)}"
+              data-edit-entry="${entry.playerId}"
             >
               ${escapeHtml(entry.name)}
             </button>
@@ -7109,25 +7236,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
               editable
                 ? `
                   <div class="compact-actions">
-                    <button
-                      type="button"
-                      class="compact-icon-button edit-icon"
-                      title="Edit player amounts"
-                      aria-label="Edit ${escapeHtml(entry.name)}"
-                      data-edit-entry="${entry.playerId}"
-                    >
-                      ${ICON_PENCIL}
-                    </button>
-
-                    <button
-                      type="button"
-                      class="compact-icon-button remove-icon"
-                      title="Remove player from game"
-                      aria-label="Remove ${escapeHtml(entry.name)} from this game"
-                      data-remove-entry="${entry.playerId}"
-                    >
-                      ${ICON_TRASH}
-                    </button>
+                    <button type="button" class="ghost small quick-rebuy" data-quick-rebuy="${entry.playerId}" title="Add a ${rebuyLabel()} buy-in" aria-label="Add a ${rebuyLabel()} buy-in for ${escapeHtml(entry.name)}">+ ${rebuyLabel()}</button>
                   </div>
                 `
                 : ""
@@ -7212,6 +7321,41 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         clearSettlement("stale");
       }
 
+      function fillRemainingHtml(gap) {
+        if (!canEditActiveGame() || gameEntries.length < 2) return "";
+
+        const blanks = gameEntries.filter((entry) => toNumber(entry.cashout) === 0);
+        if (blanks.length !== 1) return "";
+
+        return `<div class="actions" style="margin-top: 10px"><button type="button" class="secondary small" data-fill-remaining="${blanks[0].playerId}">Fill remaining: ${escapeHtml(blanks[0].name)} ${money(gap)}</button></div>`;
+      }
+
+      document.addEventListener("click", async (event) => {
+        const button = event.target.closest("[data-fill-remaining]");
+        if (!button || !canEditActiveGame()) return;
+
+        const entry = gameEntries.find((item) => item.playerId === button.dataset.fillRemaining);
+        if (!entry) return;
+
+        const others = gameEntries.reduce(
+          (sum, item) => sum + (item === entry ? 0 : Math.round(toNumber(item.cashout) * 100)),
+          0,
+        );
+        const buyins = gameEntries.reduce((sum, item) => sum + Math.round(toNumber(item.buyin) * 100), 0);
+        const remaining = (buyins - others - Math.round(totalExpenseAmount() * 100)) / 100;
+
+        if (remaining <= 0) {
+          showToast("Nothing left to fill: cash-outs already cover the pot.", "warning");
+          return;
+        }
+
+        entry.cashout = remaining.toFixed(2);
+        renderGameEntries();
+        updateGameTotals();
+        await saveGame(false, false);
+        showToast(`${entry.name}'s cash-out set to ${money(remaining)}.`, "success");
+      });
+
       function updateBalanceDisplay() {
         const totalBuyins = gameEntries.reduce(
           (sum, entry) => sum + toNumber(entry.buyin),
@@ -7288,6 +7432,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           Cash-outs plus expenses are <strong>${money(Math.abs(difference))}</strong>
           lower than buy-ins.
         </div>
+        ${fillRemainingHtml(Math.abs(difference))}
       `;
       }
 
@@ -8437,6 +8582,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
               ${renderHistoryExpenses(game)}
 
               <div class="history-settlement-actions">
+                ${(isAppAdmin() || isGroupAdmin()) ? `<button type="button" class="secondary small" data-reopen-game="${game.id}">Reopen to edit</button>` : ""}
                 <button
                   type="button"
                   class="secondary small"
@@ -9108,9 +9254,9 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         }
 
         const confirmed = await confirmModal({
-          title: `Add ${money(defaultBuyin)} as a buy-in for every current player?`,
-          body: `This adds one buy-in of ${money(defaultBuyin)} to each of the ${gameEntries.length} players in this game.`,
-          confirmLabel: "Add buy-ins",
+          title: `Set every player's buy-in to ${money(defaultBuyin)}?`,
+          body: `This replaces the existing buy-ins of all ${gameEntries.length} players with a single ${money(defaultBuyin)} buy-in each. Earlier rebuys are removed.`,
+          confirmLabel: "Set buy-ins",
         });
 
         if (!confirmed) return;
@@ -9118,6 +9264,17 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         const gameId = await saveGame(false);
 
         if (!gameId) return;
+
+        const { error: clearError } = await supabase
+          .from("game_buyin_transactions")
+          .delete()
+          .eq("game_id", gameId);
+
+        if (clearError) {
+          console.error(clearError);
+          showToast(`Could not reset buy-ins: ${clearError.message}`, "error");
+          return;
+        }
 
         const rows = gameEntries.map((entry) => ({
           game_id: gameId,
@@ -9608,6 +9765,8 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         currentGameId = canEditActiveGame() ? game.id : null;
 
         await loadBuyinTransactions(gameId);
+        restoreDefaultBuyin(gameId);
+        updateGameSetupSummary();
         await loadExpenses(gameId);
         renderGameEntries();
         renderGamePlayerOptions();
@@ -9867,7 +10026,47 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         subscribeToActiveGame(gameId);
       }
 
-      async function startGameForGroupMember() {
+      async function seedPlayersFromLastGame(gameId) {
+        const { data: last } = await supabase
+          .from("games")
+          .select("id, game_entries ( group_player_id )")
+          .eq("group_id", selectedGroupId)
+          .eq("status", "completed")
+          .order("played_at", { ascending: false })
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const onRoster = new Set(roster.map((player) => player.id));
+        const ids = (last?.game_entries || [])
+          .map((entry) => entry.group_player_id)
+          .filter((id) => onRoster.has(id));
+
+        if (!ids.length) {
+          showToast("No previous game found, so the table starts empty.", "warning");
+          return;
+        }
+
+        const amount = toNumber(document.getElementById("defaultBuyin").value);
+
+        const { error } = await supabase.from("game_entries").insert(
+          ids.map((id) => ({ game_id: gameId, group_player_id: id, buyin: amount, cashout: 0 })),
+        );
+
+        if (error) {
+          console.error(error);
+          showToast(`Could not add last game's players: ${error.message}`, "error");
+          return;
+        }
+
+        if (amount > 0) {
+          await supabase.from("game_buyin_transactions").insert(
+            ids.map((id) => ({ game_id: gameId, group_player_id: id, amount })),
+          );
+        }
+      }
+
+      async function startGameForGroupMember(withLastPlayers = false) {
         if (!selectedGroupId || !currentUser) {
           showToast("Choose a group first.", "warning");
           return;
@@ -9941,6 +10140,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
         lastClosedGame = null;
         updateReopenButton();
+        if (withLastPlayers) await seedPlayersFromLastGame(createdGame.id);
         activeGameId = createdGame.id;
         activeGameOwnerId = createdGame.created_by;
         activeGameName = createdGame.name || "";
@@ -10060,6 +10260,75 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         return period;
       }
 
+      function updateGameSetupSummary() {
+        if (!document.getElementById("gameSetupSummary")) return;
+
+        // The inputs always mirror the loaded game, so read them rather than
+        // a cached name that can lag behind.
+        const name = (
+          document.getElementById("gameName")?.value ||
+          activeGameName ||
+          ""
+        ).trim();
+
+        const rawDate = document.getElementById("gameDate")?.value || "";
+        let formattedDate = "No date";
+
+        if (rawDate) {
+          const [year, month, day] = rawDate.split("-").map(Number);
+          formattedDate = new Intl.DateTimeFormat("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          }).format(new Date(year, month - 1, day));
+        }
+
+        const buyin = Number.parseFloat(
+          document.getElementById("defaultBuyin")?.value || "",
+        );
+
+        document.getElementById("gameSetupSummaryName").textContent =
+          name || "Untitled game";
+        document.getElementById("gameSetupSummaryDate").textContent =
+          formattedDate;
+        document.getElementById("gameSetupSummaryBuyin").textContent =
+          Number.isFinite(buyin) && buyin > 0 ? money(buyin) : "No buy-in";
+      }
+
+      // The default buy-in is not stored in the database, so remember it per
+      // game on this device, and otherwise infer it from what players paid.
+      const defaultBuyinKey = (id) => `poker-vault-default-buyin-${id}`;
+
+      function rememberDefaultBuyin() {
+        const id = currentGameId || activeGameId;
+        if (!id) return;
+        try {
+          localStorage.setItem(defaultBuyinKey(id), document.getElementById("defaultBuyin").value);
+        } catch {}
+      }
+
+      function restoreDefaultBuyin(gameId) {
+        const input = document.getElementById("defaultBuyin");
+        if (!input || document.activeElement === input) return;
+
+        let stored = null;
+        try { stored = localStorage.getItem(defaultBuyinKey(gameId)); } catch {}
+
+        if (stored !== null) {
+          input.value = stored;
+          return;
+        }
+
+        // Most common first buy-in among the players.
+        const counts = new Map();
+        gameEntries.forEach((entry) => {
+          const first = entry.buyinTransactions?.[0]?.amount;
+          if (first > 0) counts.set(first, (counts.get(first) || 0) + 1);
+        });
+        const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+        if (best) input.value = String(best[0]);
+      }
+
       function setGameSetupCollapsed(collapsed) {
         const fields = document.getElementById("gameSetupFields");
         const button = document.getElementById("toggleGameSetupButton");
@@ -10067,38 +10336,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
         if (!fields || !button) return;
 
-        // Populate the compact summary before changing the layout so the
-        // browser has the complete destination state ready for the animation.
-        if (summary) {
-          const name = (
-            activeGameName ||
-            document.getElementById("gameName")?.value ||
-            ""
-          ).trim();
-
-          const rawDate = document.getElementById("gameDate")?.value || "";
-          let formattedDate = "No date";
-
-          if (rawDate) {
-            const [year, month, day] = rawDate.split("-").map(Number);
-            formattedDate = new Intl.DateTimeFormat("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            }).format(new Date(year, month - 1, day));
-          }
-
-          const buyin = Number.parseFloat(
-            document.getElementById("defaultBuyin")?.value || "",
-          );
-
-          document.getElementById("gameSetupSummaryName").textContent =
-            name || "Untitled game";
-          document.getElementById("gameSetupSummaryDate").textContent =
-            formattedDate;
-          document.getElementById("gameSetupSummaryBuyin").textContent =
-            Number.isFinite(buyin) && buyin > 0 ? money(buyin) : "No buy-in";
-        }
+        updateGameSetupSummary();
 
         button.textContent = collapsed ? "Edit" : "Hide";
         button.setAttribute("aria-expanded", String(!collapsed));
@@ -10355,7 +10593,11 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
       document
         .getElementById("startGameButton")
-        .addEventListener("click", startGameForGroupMember);
+        .addEventListener("click", () => startGameForGroupMember());
+
+      document
+        .getElementById("startSameGameButton")
+        .addEventListener("click", () => startGameForGroupMember(true));
 
       document
         .getElementById("gamePlayerSelect")
@@ -10375,6 +10617,16 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         try {
           const rawBuyin = String(entry.pendingBuyin ?? "").trim();
           const amount = Number.parseFloat(rawBuyin);
+
+          // Nothing was typed: just close the row without saving or a toast.
+          if (
+            rawBuyin === "" &&
+            toNumber(entry.cashout) === toNumber(entry.editStartCashout)
+          ) {
+            entry.isEditing = false;
+            renderGameEntries();
+            return true;
+          }
 
           if (rawBuyin !== "" && (!Number.isFinite(amount) || amount <= 0)) {
             showToast("Enter an additional buy-in greater than $0.", "error");
@@ -10574,6 +10826,11 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           const buyinHistoryPlayerId = button.dataset.buyinHistory;
           const removeBuyinId = button.dataset.removeBuyin;
 
+          if (button.dataset.quickRebuy) {
+            await quickRebuy(button.dataset.quickRebuy);
+            return;
+          }
+
           if (buyinHistoryPlayerId) {
             gameEntries = gameEntries.map((entry) =>
               entry.playerId === buyinHistoryPlayerId
@@ -10628,6 +10885,10 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
             gameEntries = gameEntries.map((entry) => ({
               ...entry,
               isEditing: entry.playerId === editPlayerId,
+              editStartCashout:
+                entry.playerId === editPlayerId
+                  ? toNumber(entry.cashout)
+                  : entry.editStartCashout,
             }));
 
             renderGameEntries();
@@ -10747,6 +11008,9 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         });
 
       document.getElementById("defaultBuyin").addEventListener("input", () => {
+        renderGameEntries();
+        rememberDefaultBuyin();
+        updateGameSetupSummary();
         validateDefaultBuyin();
         markDraftDirty();
         saveDraft();
@@ -10999,7 +11263,7 @@ document
 
         list.querySelectorAll("[data-console-remove-admin]").forEach((button) => {
           button.addEventListener("click", async () => {
-            if (!confirm("Remove Admin access from this user?")) return;
+            if (!(await confirmModal({ title: "Remove admin access?", body: "This user will lose PokerVault-wide admin access.", confirmLabel: "Remove admin", tone: "danger" }))) return;
             await setUserAdminRole(button.dataset.consoleRemoveAdmin, false);
             await renderAdminConsole();
           });
@@ -11163,6 +11427,7 @@ document
                     ? `<button type="button" class="secondary small" data-out="${e.playerId}">Out</button>`
                     : `<span></span>`}
                 <span class="t-pay">${place ? money(pay[e.playerId] || 0) : "—"}</span>
+                ${!isOut && !place ? `<span class="t-extras"><button type="button" class="ghost small" data-tour-buyin="rebuy" data-pid="${e.playerId}">+ Rebuy</button></span>` : ""}
               </div>`;
               }).join("")
             : `<p class="empty">Add players first.</p>`;
@@ -11215,6 +11480,13 @@ document
           onChange();
         });
         $("payoutStructure").addEventListener("change", onChange);
+        $("tournamentPlayers").addEventListener("click", async (event) => {
+          const b = event.target.closest("[data-tour-buyin]");
+          if (!b) return;
+          const input = $("tourRebuyAmount");
+          await quickRebuy(b.dataset.pid, toNumber(input.value) || rebuyAmount());
+          if (complete()) applyPayouts();
+        });
         $("customPayout").addEventListener("input", render);
         $("customPayout").addEventListener("change", onChange);
         $("applyPayoutsButton").addEventListener("click", applyPayouts);
@@ -11246,6 +11518,7 @@ document
           winRate: games ? (wins / games) * 100 : 0,
           avgBuyin: games ? sessions.reduce((a, x) => a + x.buyin, 0) / games : 0,
           avgNet: games ? p.net_result / games : 0,
+          roi: p.total_buyins > 0 ? (p.net_result / p.total_buyins) * 100 : 0,
         };
       }
 
@@ -11266,6 +11539,7 @@ document
         const most = top(({ st }) => st.games, 0);
         const rate = stats.filter(({ st }) => st.games >= 3).sort((a, b) => b.st.winRate - a.st.winRate)[0];
         const hot = top(({ st }) => st.currentWin, 1);
+        const roiTop = stats.filter(({ st }) => st.games >= 3).sort((a, b) => b.st.roi - a.st.roi)[0];
         const card = (label, who, value, note) =>
           `<div class="highlight-card"><span>${label}</span><strong>${escapeHtml(who)}</strong><small>${value}${note ? ` · ${escapeHtml(note)}` : ""}</small></div>`;
         const cards = [
@@ -11274,6 +11548,7 @@ document
           streak && card("Longest winning streak", streak.p.player_name, `${streak.st.bestWin} games in a row`, ""),
           most && card("Most games played", most.p.player_name, `${most.st.games} games`, ""),
           rate && card("Best win rate", rate.p.player_name, `${Math.round(rate.st.winRate)}%`, "min. 3 games"),
+          roiTop && card("Best ROI", roiTop.p.player_name, `${roiTop.st.roi >= 0 ? "+" : ""}${roiTop.st.roi.toFixed(1)}%`, "min. 3 games"),
           hot && card("Hot right now", hot.p.player_name, `${hot.st.currentWin} wins in a row`, ""),
         ].filter(Boolean);
         host.innerHTML = `<h2>Highlights</h2><p class="subtitle">Records for ${escapeHtml(leaderboardPeriodLabel())}.</p><div class="highlight-grid">${cards.join("")}</div>`;
@@ -11836,6 +12111,85 @@ document
       document.getElementById("clearHistoryFiltersButton")?.addEventListener("click", syncHistoryFilterUI);
       syncHistoryFilterUI();
 
+      async function shareSettlementImage() {
+        const lines = settlementText.split("\n").filter(Boolean);
+        if (!lines.length || !settlementShown) { showToast("Settle first.", "warning"); return; }
+        const name = (document.getElementById("gameName").value || "Poker game").trim();
+        const date = formatLeaderboardDate(`${document.getElementById("gameDate").value || todayForInput()}T12:00:00`);
+        const W = 720, rowH = 64, top = 130, H = top + lines.length * rowH + 40, S = 2;
+        const c = document.createElement("canvas");
+        c.width = W * S; c.height = H * S;
+        const x = c.getContext("2d");
+        x.scale(S, S);
+        x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
+        x.fillStyle = "#0f3a42"; x.fillRect(0, 0, W, top - 20);
+        x.fillStyle = "#d4ab5e"; x.fillRect(0, top - 24, W, 4);
+        x.fillStyle = "#fff"; x.font = "700 32px Georgia, serif"; x.fillText(name, 36, 56, W - 72);
+        x.fillStyle = "rgba(255,255,255,.75)"; x.font = "600 17px sans-serif"; x.fillText(`Poker Vault · ${date} · Who pays whom`, 36, 86);
+        lines.forEach((line, i) => {
+          const m = line.match(/^(.*) pays (.*) (\$[\d,.]+)$/);
+          const y = top + i * rowH;
+          if (i % 2 === 0) { x.fillStyle = "#f3f6f5"; x.fillRect(0, y, W, rowH); }
+          x.fillStyle = "#16201f"; x.textBaseline = "middle";
+          x.font = "700 21px sans-serif";
+          if (m) {
+            x.textAlign = "left"; x.fillText(`${m[1]}  →  ${m[2]}`, 36, y + rowH / 2, W - 200);
+            x.textAlign = "right"; x.fillStyle = "#14704f"; x.fillText(m[3], W - 36, y + rowH / 2);
+          } else { x.textAlign = "left"; x.fillText(line, 36, y + rowH / 2); }
+        });
+        const blob = await new Promise((r) => c.toBlob(r, "image/png"));
+        const file = new File([blob], "settlement.png", { type: "image/png" });
+        if (navigator.canShare?.({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: name }); return; }
+          catch (e) { if (e.name === "AbortError") return; }
+        }
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob); a.download = "settlement.png"; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        showToast("Settlement image saved.", "success");
+      }
+      document.getElementById("shareImageButton")?.addEventListener("click", shareSettlementImage);
+
+      async function reopenPastGame(gameId) {
+        if (!(isAppAdmin() || isGroupAdmin())) return;
+        const ok = await confirmModal({ title: "Reopen this game?", body: "It returns to a live draft so you can edit buy-ins and cash-outs. Its saved settlement is removed until you close it again.", confirmLabel: "Reopen" });
+        if (!ok) return;
+        const { data: live } = await supabase.from("games").select("id").eq("group_id", selectedGroupId).eq("status", "draft").limit(1).maybeSingle();
+        if (live) { showToast("Another game is in progress. Close or clear it first.", "warning"); return; }
+        const { data: entries, error: e1 } = await supabase.from("game_entries").select("group_player_id, buyin").eq("game_id", gameId);
+        if (e1) { showToast(`Could not reopen: ${e1.message}`, "error"); return; }
+        const rows = (entries || []).filter((r) => Number(r.buyin) > 0).map((r) => ({ game_id: gameId, group_player_id: r.group_player_id, amount: Number(r.buyin) }));
+        if (rows.length) {
+          const { error } = await supabase.from("game_buyin_transactions").insert(rows);
+          if (error) { showToast(`Could not reopen: ${error.message}`, "error"); return; }
+        }
+        await supabase.from("settlements").delete().eq("game_id", gameId);
+        const { error } = await supabase.from("games").update({ status: "draft" }).eq("id", gameId);
+        if (error) {
+          await supabase.from("game_buyin_transactions").delete().eq("game_id", gameId);
+          showToast(`Could not reopen: ${error.message}`, "error"); return;
+        }
+        showPanel("gamePanel");
+        await loadCurrentLiveGame();
+        await loadHistory();
+        await loadLeaderboard();
+        showToast("Game reopened. Close it again when you're done.", "success");
+      }
+      document.getElementById("gameHistory")?.addEventListener("click", (event) => {
+        const b = event.target.closest("[data-reopen-game]");
+        if (b) reopenPastGame(b.dataset.reopenGame);
+      });
+
+      // Tapping anywhere outside an open player row saves it and closes it.
+      document.addEventListener("pointerdown", (event) => {
+        const open = gameEntries.find((item) => item.isEditing);
+        if (!open) return;
+        if (event.target.closest(".compact-game-row.editing, .modal-backdrop, .toast-region")) return;
+        saveEditingEntry(open.playerId).catch((error) => {
+          console.error("Could not auto-save player amounts:", error);
+        });
+      }, true);
+
       // Player profile sheet
       function openPlayerProfile(playerId) {
         const p = trendPlayers.find((x) => String(x.player_id) === String(playerId));
@@ -11854,6 +12208,7 @@ document
           <div class="profile-stats">
             ${stat("Net profit", signedMoney(p.net_result), `${st.games} games`)}
             ${stat("Win rate", `${Math.round(st.winRate)}%`, `${st.wins} of ${st.games} games`)}
+            ${stat("ROI", `${st.roi >= 0 ? "+" : ""}${st.roi.toFixed(1)}%`, "net ÷ total buy-ins")}
             ${stat("Avg buy-in", money(st.avgBuyin))}
             ${stat("Avg per game", signedMoney(st.avgNet))}
             ${stat("Best night", st.best ? signedMoney(st.best.net) : "—", st.best ? formatLeaderboardDate(st.best.playedAt) : "")}

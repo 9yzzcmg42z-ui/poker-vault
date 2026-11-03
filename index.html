@@ -2138,6 +2138,8 @@
         }
       }
 
+      .compact-game-row[data-edit-row]:not(.editing) { cursor: pointer; }
+
       /* Prevent native mobile date controls from overflowing cards */
       input[type="date"] {
         min-width: 0;
@@ -7211,7 +7213,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           }
 
           return `
-          <div class="compact-game-row${editable ? "" : " view-only"}">
+          <div class="compact-game-row${editable ? "" : " view-only"}"${editable ? ` data-edit-row="${entry.playerId}"` : ""}>
             <button
               type="button"
               class="compact-player-name"
@@ -10742,6 +10744,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           if (!row) return;
 
           window.setTimeout(() => {
+            if (switchingRows) return;
             // If the row was re-rendered because the user tapped another
             // player's edit button, it is already detached; that is still an
             // outside interaction and must commit the old player's values.
@@ -10815,7 +10818,10 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
       document
         .getElementById("gameEntries")
         .addEventListener("click", async (event) => {
-          const button = event.target.closest("button");
+          const rowEl = event.target.closest("[data-edit-row]");
+          const button =
+            event.target.closest("button") ||
+            (rowEl ? { dataset: { editEntry: rowEl.dataset.editRow } } : null);
 
           if (!button) return;
 
@@ -10882,6 +10888,18 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           }
 
           if (editPlayerId) {
+            const previous = gameEntries.find(
+              (item) => item.isEditing && item.playerId !== editPlayerId,
+            );
+
+            // Save the row being left first. If its values are invalid, stay on it.
+            if (previous && !(await saveEditingEntry(previous.playerId))) {
+              switchingRows = false;
+              return;
+            }
+
+            switchingRows = false;
+
             gameEntries = gameEntries.map((entry) => ({
               ...entry,
               isEditing: entry.playerId === editPlayerId,
@@ -12181,10 +12199,21 @@ document
       });
 
       // Tapping anywhere outside an open player row saves it and closes it.
+      // Set when a tap lands on another player's row; the row's click handler
+      // saves the open row and opens the new one, so nothing else may re-render first.
+      let switchingRows = false;
+
       document.addEventListener("pointerdown", (event) => {
         const open = gameEntries.find((item) => item.isEditing);
         if (!open) return;
         if (event.target.closest(".compact-game-row.editing, .modal-backdrop, .toast-region")) return;
+
+        if (event.target.closest("[data-edit-row]")) {
+          switchingRows = true;
+          window.setTimeout(() => { switchingRows = false; }, 600);
+          return;
+        }
+
         saveEditingEntry(open.playerId).catch((error) => {
           console.error("Could not auto-save player amounts:", error);
         });

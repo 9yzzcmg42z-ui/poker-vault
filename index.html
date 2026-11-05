@@ -4119,6 +4119,15 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
   .brand-mark { width: 34px; height: 34px; }
   .brand-mark img { border-radius: 9px; }
 }
+      /* Keep content clear of the iPhone status bar / Dynamic Island when installed */
+.app-shell {
+  padding-top: calc(22px + env(safe-area-inset-top, 0px));
+}
+@media (max-width: 640px) {
+  .app-shell {
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+}
 </style>
   </head>
 

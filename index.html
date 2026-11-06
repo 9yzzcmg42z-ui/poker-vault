@@ -9413,7 +9413,11 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         return data.status === "completed";
       }
 
-      async function loadBuyinTransactions(gameId) {
+      let buyinLoadSeq = 0;
+
+      async function loadBuyinTransactions(gameId, { trustEmpty = false } = {}) {
+        const seq = ++buyinLoadSeq;
+
         const { data, error } = await supabase
           .from("game_buyin_transactions")
           .select("id, group_player_id, amount, created_at")
@@ -9425,7 +9429,22 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           return;
         }
 
+        // A newer load started, or the user moved to another game: drop this result.
+        if (seq !== buyinLoadSeq) return;
+        if (gameId !== currentGameId && gameId !== activeGameId) return;
+
         const log = data || [];
+
+        // An entirely empty log while players have buy-ins is the signature of
+        // a transient read, not a real change. Keep what is on screen unless a
+        // user action (removing the last buy-in) says empty is expected.
+        if (log.length === 0 && !trustEmpty) {
+          const onScreen = gameEntries.reduce(
+            (total, entry) => total + Number(entry.buyin || 0),
+            0,
+          );
+          if (onScreen > 0) return;
+        }
 
         // Nothing in the log, but the entries carry buy-ins: either the game
         // is closed and those totals are the record, or this is a draft whose
@@ -10913,7 +10932,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
               return;
             }
 
-            await loadBuyinTransactions(currentGameId);
+            await loadBuyinTransactions(currentGameId, { trustEmpty: true });
             await saveGame(false);
             return;
           }
@@ -11179,7 +11198,7 @@ document
           await removeExpense(button.dataset.removeExpense);
         });
 
-      supabase.auth.onAuthStateChange((event) => {
+      supabase.auth.onAuthStateChange((event, session) => {
         // Opening the reset link from an email fires this event.
         if (event === "PASSWORD_RECOVERY") {
           passwordFlowMode = "recovery";
@@ -11190,6 +11209,12 @@ document
         // While the password form is open, ignore background refreshes so
         // they cannot reload the app underneath it.
         if (passwordFlowMode && event !== "SIGNED_OUT") return;
+
+        // Focus-regain SIGNED_IN, periodic token refreshes and the startup
+        // INITIAL_SESSION (covered by the updateAuthUI() call below) must not
+        // rebuild the app in the middle of a game.
+        if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED") return;
+        if (event === "SIGNED_IN" && session?.user?.id && session.user.id === currentUser?.id) return;
 
         updateAuthUI();
       });
@@ -12163,9 +12188,30 @@ document
       async function shareSettlementImage() {
         const lines = settlementText.split("\n").filter(Boolean);
         if (!lines.length || !settlementShown) { showToast("Settle first.", "warning"); return; }
+
         const name = (document.getElementById("gameName").value || "Poker game").trim();
         const date = formatLeaderboardDate(`${document.getElementById("gameDate").value || todayForInput()}T12:00:00`);
-        const W = 720, rowH = 64, top = 130, H = top + lines.length * rowH + 40, S = 2;
+        const subtitle = `Poker Vault · ${date} · Who pays whom`;
+
+        const PAD = 36, GAP = 40, rowH = 64, top = 130, S = 2;
+        const rows = lines.map((line) => {
+          const m = line.match(/^(.*) pays (.*) (\$[\d,.]+)$/);
+          return m ? { left: `${m[1]}  →  ${m[2]}`, right: m[3] } : { left: line, right: "" };
+        });
+
+        // Measure first so the image is only as wide as its content.
+        const probe = document.createElement("canvas").getContext("2d");
+        probe.font = "700 21px sans-serif";
+        const leftMax = Math.max(...rows.map((r) => probe.measureText(r.left).width));
+        const rightMax = Math.max(...rows.map((r) => (r.right ? probe.measureText(r.right).width : 0)));
+        probe.font = "700 32px Georgia, serif";
+        const titleW = probe.measureText(name).width;
+        probe.font = "600 17px sans-serif";
+        const subW = probe.measureText(subtitle).width;
+
+        const W = Math.ceil(Math.min(720, Math.max(380, PAD * 2 + Math.max(titleW, subW, leftMax + GAP + rightMax))));
+        const H = top + rows.length * rowH + 40;
+
         const c = document.createElement("canvas");
         c.width = W * S; c.height = H * S;
         const x = c.getContext("2d");
@@ -12173,19 +12219,24 @@ document
         x.fillStyle = "#fff"; x.fillRect(0, 0, W, H);
         x.fillStyle = "#0f3a42"; x.fillRect(0, 0, W, top - 20);
         x.fillStyle = "#d4ab5e"; x.fillRect(0, top - 24, W, 4);
-        x.fillStyle = "#fff"; x.font = "700 32px Georgia, serif"; x.fillText(name, 36, 56, W - 72);
-        x.fillStyle = "rgba(255,255,255,.75)"; x.font = "600 17px sans-serif"; x.fillText(`Poker Vault · ${date} · Who pays whom`, 36, 86);
-        lines.forEach((line, i) => {
-          const m = line.match(/^(.*) pays (.*) (\$[\d,.]+)$/);
+        x.textBaseline = "alphabetic";
+        x.textAlign = "left";
+        x.fillStyle = "#fff"; x.font = "700 32px Georgia, serif"; x.fillText(name, PAD, 56, W - PAD * 2);
+        x.fillStyle = "rgba(255,255,255,.75)"; x.font = "600 17px sans-serif"; x.fillText(subtitle, PAD, 86, W - PAD * 2);
+
+        rows.forEach((row, i) => {
           const y = top + i * rowH;
           if (i % 2 === 0) { x.fillStyle = "#f3f6f5"; x.fillRect(0, y, W, rowH); }
-          x.fillStyle = "#16201f"; x.textBaseline = "middle";
+          x.textBaseline = "middle";
           x.font = "700 21px sans-serif";
-          if (m) {
-            x.textAlign = "left"; x.fillText(`${m[1]}  →  ${m[2]}`, 36, y + rowH / 2, W - 200);
-            x.textAlign = "right"; x.fillStyle = "#14704f"; x.fillText(m[3], W - 36, y + rowH / 2);
-          } else { x.textAlign = "left"; x.fillText(line, 36, y + rowH / 2); }
+          x.textAlign = "left"; x.fillStyle = "#16201f";
+          x.fillText(row.left, PAD, y + rowH / 2);
+          if (row.right) {
+            x.textAlign = "right"; x.fillStyle = "#14704f";
+            x.fillText(row.right, W - PAD, y + rowH / 2);
+          }
         });
+
         const blob = await new Promise((r) => c.toBlob(r, "image/png"));
         const file = new File([blob], "settlement.png", { type: "image/png" });
         if (navigator.canShare?.({ files: [file] })) {

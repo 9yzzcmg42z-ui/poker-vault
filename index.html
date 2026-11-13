@@ -15,8 +15,9 @@
       (function () {
         try {
           var mode = localStorage.getItem("poker-vault-theme") || "auto";
-          var dark = mode === "dark" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          var dark = mode === "dark" || mode === "felt" || (mode === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
           document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+          if (mode === "felt") document.documentElement.setAttribute("data-skin", "felt");
         } catch (e) {}
       })();
     </script>
@@ -4129,6 +4130,128 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
     padding-top: calc(10px + env(safe-area-inset-top, 0px));
   }
 }
+
+/* ===== Visual polish pass ===== */
+
+/* Chip avatars on the live table */
+.chip{flex:0 0 auto}
+.chip-xs{width:30px;height:30px;font-size:.64rem}
+.chip-xs::before{inset:3.5px;border-width:1.2px}
+button.compact-player-name{display:flex;align-items:center;gap:10px}
+.cp-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.editing-player-name{display:flex;align-items:center;gap:10px}
+@media (max-width:640px){
+  #gamePanel .card{padding:22px 14px 24px}
+  .chip-xs{width:26px;height:26px;font-size:.58rem}
+  .chip-xs::before{inset:3px}
+  button.compact-player-name{gap:8px;font-size:.95rem}
+  .compact-list-head,.compact-list-head.view-only{grid-template-columns:minmax(0,1fr) 56px 56px 60px;gap:6px;padding:0 10px 6px}
+  .compact-list-head.view-only{grid-template-columns:minmax(0,1fr) 56px 56px}
+  .compact-game-list .compact-game-row:not(.editing){grid-template-columns:minmax(0,1fr) 56px 56px 60px;gap:6px;padding:8px 10px}
+  .compact-game-list .compact-game-row.view-only:not(.editing){grid-template-columns:minmax(0,1fr) 56px 56px}
+}
+
+/* Motion: totals bump when they change, rows flash when amounts land */
+.stat strong{display:inline-block;transform-origin:left center}
+@keyframes money-bump{0%{transform:scale(1)}35%{transform:scale(1.1)}100%{transform:scale(1)}}
+.stat strong.bump{animation:money-bump .45s ease-out}
+@keyframes row-flash{0%{background:rgba(184,138,62,.38)}100%{background:rgba(184,138,62,0)}}
+.compact-game-row.row-flash{animation:row-flash 1s ease-out}
+
+/* Tab transitions */
+@keyframes panel-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.workspace-panel.active{animation:panel-in .22s ease-out}
+
+@media (prefers-reduced-motion:reduce){
+  .stat strong.bump,.compact-game-row.row-flash,.workspace-panel.active,.tv-overlay.levelup .tv-blinds{animation:none}
+  .blind-ring .ring-bar,.tv-bar span{transition:none}
+}
+
+/* Blind timer progress ring */
+.blind-ring{position:relative;width:min(250px,72vw);aspect-ratio:1;margin:10px auto 4px}
+.blind-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.blind-ring .ring-track{fill:none;stroke:var(--line-strong);stroke-width:5}
+.blind-ring .ring-bar{fill:none;stroke:var(--gold);stroke-width:5;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:0;transition:stroke-dashoffset .3s linear,stroke .3s ease}
+.blind-ring.low .ring-bar{stroke:var(--loss)}
+.blind-ring.paused .ring-bar{opacity:.55}
+.blind-ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 12%}
+.blind-ring .blind-clock{margin:0;font-size:clamp(2.2rem,11vw,3rem)}
+
+/* TV mode */
+.tv-overlay{position:fixed;inset:0;z-index:500;display:flex;flex-direction:column;justify-content:space-between;gap:16px;padding:calc(20px + env(safe-area-inset-top,0px)) 28px calc(20px + env(safe-area-inset-bottom,0px));background:radial-gradient(1400px 800px at 50% 0%,#17525c 0%,#0a2a31 55%,#061a1f 100%);color:#fff;text-align:center}
+.tv-overlay[hidden]{display:none}
+.tv-top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.tv-brand{color:#d4ab5e;font-size:.85rem;font-weight:800;letter-spacing:.22em}
+.tv-game{flex:1;min-width:0;overflow:hidden;font-family:var(--font-display);font-size:1.25rem;opacity:.85;text-overflow:ellipsis;white-space:nowrap}
+.tv-main{display:flex;flex-direction:column;align-items:center;gap:clamp(6px,2vh,22px)}
+.tv-level{color:#d4ab5e;font-size:clamp(1rem,3vw,2rem);font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+.tv-blinds{font-family:var(--font-display);font-size:min(13vw,16vh);font-weight:700;line-height:1}
+.tv-clock{font-size:min(24vw,32vh);font-weight:800;line-height:1;font-variant-numeric:tabular-nums lining-nums}
+.tv-clock.low{color:#ff9a86}
+.tv-overlay.paused .tv-clock{opacity:.6}
+.tv-bar{width:min(80vw,900px);height:10px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.14)}
+.tv-bar span{display:block;width:100%;height:100%;background:#d4ab5e;transition:width .3s linear}
+.tv-overlay.low .tv-bar span{background:#ff8a76}
+.tv-next{font-size:clamp(1rem,2.4vw,1.8rem);opacity:.8}
+.tv-foot{display:flex;flex-direction:column;align-items:center;gap:14px}
+.tv-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 28px;font-size:clamp(1rem,2.2vw,1.6rem);opacity:.92}
+.tv-stats strong{color:#d4ab5e}
+.tv-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:12px}
+.tv-overlay button{padding:14px 22px;border:1px solid rgba(255,255,255,.28);border-radius:14px;background:rgba(255,255,255,.1);color:#fff;box-shadow:none;font-size:1.05rem}
+.tv-overlay button:hover{background:rgba(255,255,255,.2)}
+.tv-overlay .tv-close{padding:9px 16px;font-size:.9rem}
+@keyframes tv-pulse{0%{color:#fff;transform:scale(1)}15%{color:#d4ab5e;transform:scale(1.12)}100%{color:#fff;transform:scale(1)}}
+.tv-overlay.levelup .tv-blinds{animation:tv-pulse 2.5s ease-out}
+
+/* Podium */
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;align-items:end;margin:18px 0 16px}
+.podium-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:14px 8px 12px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow-sm);text-align:center;cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.podium-card:hover,.podium-card:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow-raised);outline:none}
+.podium-card.p1{padding:24px 8px 16px;border-color:#e6d3a8;background:linear-gradient(180deg,var(--gold-soft),var(--surface) 75%)}
+.podium-card .chip{width:46px;height:46px;font-size:.9rem}
+.podium-card .chip::before{inset:5px}
+.podium-card.p1 .chip{width:58px;height:58px;font-size:1.05rem;--chip:#d9aa43;--chip-ink:#3b2d00}
+.podium-card.p2 .chip{--chip:#c3cccb;--chip-ink:#26302f}
+.podium-card.p3 .chip{--chip:#b26a35;--chip-ink:#fff}
+.podium-medal{color:var(--muted);font-size:.68rem;font-weight:800;letter-spacing:.1em}
+.podium-name{max-width:100%;overflow:hidden;font-family:var(--font-display);font-size:.95rem;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.podium-net{font-size:.95rem;font-weight:800;font-variant-numeric:tabular-nums lining-nums;white-space:nowrap}
+.podium-sub{color:var(--muted);font-size:.72rem}
+.podium-crown{position:absolute;top:-13px;left:50%;transform:translateX(-50%)}
+.podium-crown .crown-icon{width:28px;height:21px;margin:0}
+
+/* Crowns and sparklines */
+.crown-icon{display:inline-block;width:14px;height:11px;margin-right:4px;color:var(--gold);vertical-align:-1px}
+.history-winner .crown-icon{flex:0 0 auto;align-self:center;margin-right:0}
+.history-player-name .crown-icon{margin-right:5px}
+.lb-numcol{display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:0}
+.spark{display:block;width:64px;height:18px;overflow:visible}
+.spark polyline{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.spark circle{fill:currentColor}
+.spark-pos{color:var(--profit)}
+.spark-neg{color:var(--loss)}
+@media (max-width:360px){.spark{width:54px}}
+
+/* Illustrated empty states */
+.empty-art{display:grid;place-items:center;margin:0 auto 10px}
+.empty-art svg{display:block;width:104px;height:auto}
+.empty-art-block{padding:10px 0 4px;text-align:center}
+.empty-art-block .empty{padding-top:4px}
+
+/* Felt skin: a green-baize variant of the dark theme */
+:root[data-theme="dark"][data-skin="felt"]{
+  --green:#a8efc4; --green-2:#c6f6d9; --green-soft:#16402e;
+  --btn:#1f7a52; --btn-2:#27905f;
+  --page:#0a2a1d; --surface:#0f3a29; --surface-2:#134532;
+  --line:#1f5a41; --line-strong:#2b7355;
+  --ink:#eef6ef; --ink-soft:#bfd8c6; --muted:#8fb09b;
+  --profit:#6ee7a8;
+}
+:root[data-skin="felt"] body{background:radial-gradient(1200px 600px at 50% -100px,#1a6a47,transparent 70%),repeating-radial-gradient(circle at 20% 30%,rgba(255,255,255,.02) 0 1px,transparent 1px 3px),var(--page)}
+:root[data-skin="felt"] .top-banner{background:linear-gradient(120deg,#06241a 0%,#0b3a28 60%,#13533a 100%)}
+:root[data-skin="felt"] .stat-key{background:linear-gradient(135deg,#0b3a28,#13533a)}
+:root[data-skin="felt"] .chip{--chip:#1f7a52}
+:root[data-skin="felt"] .banner-select option{background:var(--surface);color:var(--ink)}
 </style>
   </head>
 
@@ -4287,12 +4410,14 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
             </div>
 
             <div id="noGroupGameMessage" class="empty-workspace">
+              <div class="empty-art" data-art="cards"></div>
               Select or create a group before starting a game.
             </div>
 
             <div id="gameInitialLoading" aria-busy="true"><span class="sr-only">Checking current game…</span><div class="skeleton"><div class="skeleton-row short"></div><div class="skeleton-row"></div><div class="skeleton-row"></div><div class="skeleton-row"></div></div></div>
 
             <div id="noLiveGameMessage" class="empty-workspace hidden">
+              <div class="empty-art" data-art="chips"></div>
               <p class="empty-workspace-title" id="noLiveGameTitle">
                 No game in progress
               </p>
@@ -4548,14 +4673,23 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
                     <span id="blindLevelLabel">Level 1</span>
                     <span id="blindBlinds">25 / 50</span>
                   </div>
-                  <div class="blind-clock paused" id="blindClock" role="timer" aria-live="off">15:00</div>
-                  <div class="blind-next" id="blindNext">Next: 50 / 100</div>
+                  <div class="blind-ring paused" id="blindRing">
+                    <svg viewBox="0 0 120 120" aria-hidden="true">
+                      <circle class="ring-track" cx="60" cy="60" r="54" />
+                      <circle class="ring-bar" id="blindRingBar" cx="60" cy="60" r="54" pathLength="100" />
+                    </svg>
+                    <div class="blind-ring-inner">
+                      <div class="blind-clock paused" id="blindClock" role="timer" aria-live="off">15:00</div>
+                      <div class="blind-next" id="blindNext">Next: 50 / 100</div>
+                    </div>
+                  </div>
                   <div class="blind-controls">
                     <button type="button" id="blindStartButton">Start</button>
                     <button type="button" class="secondary" id="blindPrevButton" aria-label="Previous level">&lsaquo; Level</button>
                     <button type="button" class="secondary" id="blindNextButton" aria-label="Next level">Level &rsaquo;</button>
                     <button type="button" class="ghost" id="blindResetButton">Reset</button>
                   </div>
+                  <button type="button" class="secondary" id="blindTvButton" style="width: 100%; margin-top: 10px">TV mode</button>
                   <div class="blind-settings">
                     <label for="blindMinutes">Minutes per level</label>
                     <select id="blindMinutes">
@@ -4974,6 +5108,11 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
       let lbPlayersCache = [];
       const LB_PREVIEW = 10;
       const LEADERBOARD_PAGE_SIZE = 500;
+      let moneyTweenCount = 0;
+      let renderedAmounts = new Map();
+      let renderedAmountsGame = null;
+      let trendGradSeq = 0;
+      let tournamentInfo = { total: 0, left: 0, pool: 0 };
       let leaderboardLoadToken = 0;
       let lastClosedGame = null;
       let lbLoadedGroupId = null;
@@ -6806,6 +6945,8 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
         if (roster.length === 0) {
           rosterList.innerHTML = `
+          <div class="empty-art-block">
+          <div class="empty-art">${emptyArtSvg("cards")}</div>
           <p class="empty">
             No players in this roster yet.
             ${
@@ -6814,6 +6955,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
                 : "Ask the group admin to add players."
             }
           </p>
+          </div>
         `;
           return;
         }
@@ -7046,6 +7188,118 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
       const ICON_TRASH = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.9 4.6h10.2M6.4 4.6V3.2a.9.9 0 0 1 .9-.9h1.4a.9.9 0 0 1 .9.9v1.4M4.3 4.6l.6 8.2a1 1 0 0 0 1 .9h4.2a1 1 0 0 0 1-.9l.6-8.2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
+      const ICON_CROWN = `<svg class="crown-icon" viewBox="0 0 16 12" aria-hidden="true" focusable="false"><path d="M1 10.5 .6 3.4 4.2 6.4 8 1l3.8 5.4 3.6-3L15 10.5Z" fill="currentColor"/><rect x="1" y="10.9" width="14" height="1.1" rx=".5" fill="currentColor"/></svg>`;
+
+      function emptyArtSvg(kind) {
+        if (kind === "cards") {
+          return `<svg viewBox="0 0 120 96" aria-hidden="true" focusable="false"><ellipse cx="60" cy="88" rx="40" ry="5" fill="currentColor" opacity=".08"/><g transform="translate(50 50) rotate(-14)"><rect x="-26" y="-36" width="52" height="72" rx="7" fill="#fff" stroke="#cfd8d7" stroke-width="1.5"/><text x="0" y="9" text-anchor="middle" font-size="32" fill="#0f3a42" font-family="Georgia,serif">♠</text></g><g transform="translate(72 52) rotate(11)"><rect x="-26" y="-36" width="52" height="72" rx="7" fill="#fff" stroke="#cfd8d7" stroke-width="1.5"/><text x="0" y="9" text-anchor="middle" font-size="32" fill="#c15f3c" font-family="Georgia,serif">♥</text></g></svg>`;
+        }
+
+        const layer = (cy, top, side) =>
+          `<ellipse cx="60" cy="${cy + 10}" rx="32" ry="10" fill="${side}"/><rect x="28" y="${cy}" width="64" height="10" fill="${side}"/><ellipse cx="60" cy="${cy}" rx="32" ry="10" fill="${top}"/><ellipse cx="60" cy="${cy}" rx="22" ry="6.5" fill="none" stroke="#fff" stroke-opacity=".85" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+
+        return `<svg viewBox="0 0 120 96" aria-hidden="true" focusable="false"><ellipse cx="60" cy="90" rx="40" ry="5" fill="currentColor" opacity=".08"/>${layer(70, "#17525c", "#0f3a42")}${layer(56, "#d4ab5e", "#b88a3e")}${layer(42, "#c15f3c", "#a8472f")}</svg>`;
+      }
+
+      document.querySelectorAll("[data-art]").forEach((element) => {
+        element.innerHTML = emptyArtSvg(element.dataset.art);
+      });
+
+      function playerChipHtml(name) {
+        return `<span class="chip chip-xs" style="--chip:${chipColorFor(name)}" aria-hidden="true">${escapeHtml(initialsOf(name))}</span>`;
+      }
+
+      const prefersReducedMotion = () =>
+        Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+
+      function formatDifference(value) {
+        if (value > 0.005) return `+${money(value)}`;
+        if (value < -0.005) return `-${money(Math.abs(value))}`;
+        return money(0);
+      }
+
+      // Counts a money figure from its current value to the new one. The first
+      // value shown is never animated, and reduced-motion users get a plain swap.
+      function tweenMoney(element, to, format = money) {
+        if (!element) return;
+
+        const from = Number.isFinite(element._moneyValue) ? element._moneyValue : to;
+        element._moneyValue = to;
+
+        if (element._moneyRaf) {
+          cancelAnimationFrame(element._moneyRaf);
+          element._moneyRaf = 0;
+          moneyTweenCount--;
+        }
+
+        if (from === to || prefersReducedMotion()) {
+          element.textContent = format(to);
+          return;
+        }
+
+        moneyTweenCount++;
+        const startedAt = performance.now();
+        const duration = 450;
+
+        const step = (now) => {
+          const progress = Math.min(1, (now - startedAt) / duration);
+
+          if (progress < 1) {
+            const eased = 1 - Math.pow(1 - progress, 3);
+            element.textContent = format(from + (to - from) * eased);
+            element._moneyRaf = requestAnimationFrame(step);
+            return;
+          }
+
+          element._moneyRaf = 0;
+          moneyTweenCount--;
+          element.textContent = format(to);
+        };
+
+        element._moneyRaf = requestAnimationFrame(step);
+
+        element.classList.remove("bump");
+        void element.offsetWidth;
+        element.classList.add("bump");
+      }
+
+      function flashPlayerRow(playerId) {
+        const row = document.querySelector(
+          `#gameEntries [data-player-row="${CSS.escape(String(playerId))}"]`,
+        );
+
+        if (!row) return;
+
+        row.classList.remove("row-flash");
+        void row.offsetWidth;
+        row.classList.add("row-flash");
+        window.setTimeout(() => row.classList.remove("row-flash"), 1100);
+      }
+
+      // Called after every table render: any row whose buy-in or cash-out
+      // differs from the previous render of the same game gets a brief flash,
+      // for the host and for members watching live.
+      function trackRenderedAmounts() {
+        const gameKey = activeGameId || currentGameId || null;
+        const next = new Map();
+        const changed = [];
+
+        gameEntries.forEach((entry) => {
+          const signature = `${Math.round(toNumber(entry.buyin) * 100)}|${Math.round(toNumber(entry.cashout) * 100)}`;
+          next.set(entry.playerId, signature);
+
+          const previous = renderedAmounts.get(entry.playerId);
+
+          if (renderedAmountsGame === gameKey && previous !== undefined && previous !== signature) {
+            changed.push(entry.playerId);
+          }
+        });
+
+        renderedAmounts = next;
+        renderedAmountsGame = gameKey;
+        changed.forEach(flashPlayerRow);
+      }
+
       const ICON_ARROW = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 8h10M9 4.5 12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
       const ICON_CHECK = `<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.2 8.6 6.3 11.8 12.8 4.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -7109,8 +7363,12 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
         if (gameEntries.length === 0) {
           container.innerHTML = `
-      <p class="empty">Choose players from the group roster.</p>
+      <div class="empty-art-block">
+        <div class="empty-art">${emptyArtSvg("chips")}</div>
+        <p class="empty">Choose players from the group roster.</p>
+      </div>
     `;
+          trackRenderedAmounts();
           return;
         }
 
@@ -7130,9 +7388,9 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
           if (isEditing && editable) {
             return `
-            <div class="compact-game-row editing">
+            <div class="compact-game-row editing" data-player-row="${entry.playerId}">
               <strong class="editing-player-name">
-                ${escapeHtml(entry.name)}
+                ${playerChipHtml(entry.name)}<span class="cp-name">${escapeHtml(entry.name)}</span>
               </strong>
 
               <div class="editing-actions">
@@ -7227,7 +7485,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           }
 
           return `
-          <div class="compact-game-row${editable ? "" : " view-only"}"${editable ? ` data-edit-row="${entry.playerId}"` : ""}>
+          <div class="compact-game-row${editable ? "" : " view-only"}" data-player-row="${entry.playerId}"${editable ? ` data-edit-row="${entry.playerId}"` : ""}>
             <button
               type="button"
               class="compact-player-name"
@@ -7235,7 +7493,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
               aria-label="Edit ${escapeHtml(entry.name)}"
               data-edit-entry="${entry.playerId}"
             >
-              ${escapeHtml(entry.name)}
+              ${playerChipHtml(entry.name)}<span class="cp-name">${escapeHtml(entry.name)}</span>
             </button>
 
             <span class="compact-money buyin-money">
@@ -7264,6 +7522,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         .join("")}
     </div>
   `;
+        trackRenderedAmounts();
       }
 
       function gameSettlementSignature() {
@@ -7349,14 +7608,9 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         const difference =
           Math.round((totalCashouts + totalExpenseAmount() - totalBuyins) * 100) / 100;
 
-        document.getElementById("totalBuyins").textContent = money(totalBuyins);
-
-        document.getElementById("totalCashouts").textContent =
-          money(totalCashouts);
-
-        document.getElementById("totalExpenses").textContent = money(
-          totalExpenseAmount(),
-        );
+        tweenMoney(document.getElementById("totalBuyins"), totalBuyins);
+        tweenMoney(document.getElementById("totalCashouts"), totalCashouts);
+        tweenMoney(document.getElementById("totalExpenses"), totalExpenseAmount());
 
         const differenceElement = document.getElementById("difference");
         const messageElement = document.getElementById("gameBalanceMessage");
@@ -7371,14 +7625,14 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         };
 
         if (gameEntries.length === 0) {
-          differenceElement.textContent = "$0.00";
+          tweenMoney(differenceElement, 0, formatDifference);
           setOffBalance(false);
           messageElement.innerHTML = "";
           return;
         }
 
         if (Math.abs(difference) < 0.01) {
-          differenceElement.textContent = "$0.00";
+          tweenMoney(differenceElement, 0, formatDifference);
           setOffBalance(false);
 
           messageElement.innerHTML = `
@@ -7392,7 +7646,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         setOffBalance(true);
 
         if (difference > 0) {
-          differenceElement.textContent = `+${money(difference)}`;
+          tweenMoney(differenceElement, difference, formatDifference);
 
           messageElement.innerHTML = `
           <div class="warning">
@@ -7403,7 +7657,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
           return;
         }
 
-        differenceElement.textContent = `-${money(Math.abs(difference))}`;
+        tweenMoney(differenceElement, difference, formatDifference);
 
         messageElement.innerHTML = `
         <div class="warning">
@@ -8472,7 +8726,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
             const winnerSummary =
               topWinner && topWinner.net > 0
-                ? `<span class="history-winner"><span class="history-winner-name">${escapeHtml(
+                ? `<span class="history-winner">${ICON_CROWN}<span class="history-winner-name">${escapeHtml(
                     topWinner.name,
                   )}</span><strong class="positive">+${money(
                     topWinner.net,
@@ -8488,7 +8742,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
                 return `
               <div class="history-player-row">
-                <span class="history-player-name">${escapeHtml(row.name)}</span>
+                <span class="history-player-name">${row === topWinner && row.net > 0 ? ICON_CROWN : ""}${escapeHtml(row.name)}</span>
                 <span class="lb-num lb-secondary">${money(row.buyin)}</span>
                 <span class="lb-num lb-secondary">${money(row.cashout)}</span>
                 <span class="lb-num ${netClass}">${netText}</span>
@@ -8802,6 +9056,58 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         });
       }
 
+      function sparklineSvg(player) {
+        const sessions = [...(player.sessions || [])].sort(
+          (a, b) => new Date(a.playedAt) - new Date(b.playedAt),
+        );
+
+        if (sessions.length < 2) return "";
+
+        let running = 0;
+        const values = sessions.map((session) => (running += session.net)).slice(-20);
+        const low = Math.min(...values);
+        const high = Math.max(...values);
+        const W = 64;
+        const H = 18;
+        const x = (index) => 2 + (index / (values.length - 1)) * (W - 4);
+        const y = (value) =>
+          high === low ? H / 2 : H - 2 - ((value - low) / (high - low)) * (H - 4);
+        const points = values.map((value, index) => `${x(index).toFixed(1)},${y(value).toFixed(1)}`);
+        const last = values.length - 1;
+        const cls = values[last] >= 0 ? "spark-pos" : "spark-neg";
+
+        return `<svg class="spark ${cls}" viewBox="0 0 ${W} ${H}" aria-hidden="true" focusable="false"><polyline points="${points.join(" ")}"/><circle cx="${x(last).toFixed(1)}" cy="${y(values[last]).toFixed(1)}" r="1.9"/></svg>`;
+      }
+
+      function podiumHtml(players) {
+        if (players.length < 3) return "";
+
+        const labels = ["1ST", "2ND", "3RD"];
+
+        const cards = [1, 0, 2]
+          .map((index) => {
+            const player = players[index];
+            const net = Number(player.net_result);
+            const cls = net >= 0 ? "positive" : "negative";
+            const games = Number(player.games_played) || 0;
+
+            return `
+          <div class="podium-card p${index + 1}" role="button" tabindex="0"
+            data-open-profile="${escapeHtml(player.player_id)}"
+            aria-label="${escapeHtml(player.player_name)}, ${labels[index]}, ${signedMoney(net)}">
+            ${index === 0 && net > 0 ? `<span class="podium-crown">${ICON_CROWN}</span>` : ""}
+            <span class="chip" aria-hidden="true">${escapeHtml(initialsOf(player.player_name))}</span>
+            <span class="podium-medal">${labels[index]}</span>
+            <span class="podium-name">${escapeHtml(player.player_name)}</span>
+            <span class="podium-net ${cls}">${signedMoney(net)}</span>
+            <span class="podium-sub">${games} ${games === 1 ? "game" : "games"}</span>
+          </div>`;
+          })
+          .join("");
+
+        return `<div class="podium">${cards}</div>`;
+      }
+
       function renderLeaderboardSessionDetails(player) {
         const sessions = [...(player.sessions || [])].sort(
           (a, b) => new Date(b.playedAt) - new Date(a.playedAt),
@@ -8896,6 +9202,8 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         </div>
       `;
 
+        const podium = podiumHtml(players);
+
         // Bars are scaled against the largest swing in either direction, so
         // rank order and magnitude are both readable without reading numbers.
         const largestSwing = players.reduce(
@@ -8941,7 +9249,10 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
               <span class="lb-track"><span class="lb-bar ${netClass}" style="width:${width}%"></span></span>
             </span>
 
-            <span class="lb-num lb-net ${netClass}">${netText}</span>
+            <span class="lb-numcol">
+              <span class="lb-num lb-net ${netClass}">${netText}</span>
+              ${sparklineSvg(player)}
+            </span>
           </div>
           ${renderLeaderboardSessionDetails(player)}
         `;
@@ -8950,6 +9261,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
 
         container.innerHTML = `
         ${insights}
+        ${podium}
 
         <div class="lb-table">
           <div class="lb-row lb-head">
@@ -8962,7 +9274,7 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         </div>
 
         <div class="lb-more">
-          <button type="button" class="secondary small" data-lb-copy>Copy standings</button>
+          <button type="button" class="secondary small" data-lb-share>Share as image</button>
           ${
             collapsible
               ? `<button type="button" class="secondary small" data-lb-toggle-all>${
@@ -10221,46 +10533,6 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         }
       }
 
-      async function copyStandings() {
-        const players = lbPlayersCache;
-
-        if (!players.length) {
-          showToast("No standings to copy yet.", "warning");
-          return;
-        }
-
-        const group = selectedGroup();
-        const medals = ["🥇", "🥈", "🥉"];
-
-        const lines = players.map((player) => {
-          const games = Number(player.games_played) || 0;
-          const mark =
-            player.profit_rank <= 3
-              ? medals[player.profit_rank - 1]
-              : `${player.profit_rank}.`;
-
-          return `${mark} ${player.player_name}  ${signedMoney(Number(player.net_result))} (${games} ${games === 1 ? "game" : "games"})`;
-        });
-
-        const text = [
-          `♠ ${group ? group.name : "Poker Vault"} standings`,
-          `Net profit · ${leaderboardPeriodLabel()}`,
-          "",
-          ...lines,
-        ].join("\n");
-
-        const copied = await copyTextToClipboard(text);
-
-        if (copied) {
-          showToast("Standings copied.", "success");
-        } else {
-          window.prompt(
-            "Automatic copy is blocked. Select the standings below and copy them:",
-            text,
-          );
-        }
-      }
-
       function leaderboardPeriodLabel() {
         let period = "all completed games";
 
@@ -10832,6 +11104,13 @@ button.compact-player-name{font-family:var(--font-display);font-size:1.12rem;fon
         .getElementById("leaderboard")
         .addEventListener("keydown", (event) => {
           if (event.key !== "Enter" && event.key !== " ") return;
+
+          const podiumCard = event.target.closest(".podium-card");
+          if (podiumCard) {
+            event.preventDefault();
+            openPlayerProfile(podiumCard.dataset.openProfile);
+            return;
+          }
 
           const row = event.target.closest(".lb-player-row");
           if (!row) return;
@@ -11455,6 +11734,11 @@ document
           if (gameEntries.length) outOrder = outOrder.filter((id) => ids.has(id));
           const pay = payouts();
           const done = complete();
+          tournamentInfo = {
+            total: gameEntries.length,
+            left: gameEntries.length ? Math.max(1, gameEntries.length - outOrder.length) : 0,
+            pool: Math.max(pool(), 0),
+          };
           $("tournamentPool").textContent = `Pool ${money(Math.max(pool(), 0))}`;
           $("customPayoutWrap").classList.toggle("hidden", $("payoutStructure").value !== "custom");
           $("applyPayoutsButton").classList.toggle("hidden", !done);
@@ -11549,7 +11833,11 @@ document
         $("customPayout").addEventListener("change", onChange);
         $("applyPayoutsButton").addEventListener("click", applyPayouts);
 
-        const observer = new MutationObserver(render);
+        // Totals animate through many text changes; render once they settle.
+        const observer = new MutationObserver(() => {
+          if (moneyTweenCount > 0) return;
+          render();
+        });
         ["gamePlayerCount", "totalBuyins", "totalExpenses"].forEach((id) =>
           observer.observe($(id), { childList: true, characterData: true, subtree: true }));
         observer.observe($("gameWorkspace"), { attributes: true, attributeFilter: ["class"] });
@@ -11683,6 +11971,7 @@ document
         const grid = ticks.map((v) => `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end" font-size="11" fill="currentColor">${fmtTick(v)}</text>`).join("");
         const zero = kind === "rank" ? "" : `<line x1="${L}" x2="${W - R}" y1="${Y(0)}" y2="${Y(0)}" stroke="currentColor" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55"/>`;
         let marks = "";
+        let defs = "";
         if (kind === "game") {
           const slot = (W - L - R) / n;
           shown.forEach((x, k) => {
@@ -11696,6 +11985,15 @@ document
         } else {
           shown.forEach((x) => {
             const pts = x.points.filter((pt) => (kind === "rank" ? pt.rank !== null : true));
+
+            // Soft fill down to the zero line; skipped when many lines overlap.
+            if (kind === "cumulative" && shown.length <= 3 && pts.length > 1) {
+              const gradientId = `trendFill${++trendGradSeq}`;
+              const base = Y(0);
+              defs += `<linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${x.color}" stop-opacity="0.30"/><stop offset="1" stop-color="${x.color}" stop-opacity="0.02"/></linearGradient>`;
+              marks += `<path d="M${xLine(pts[0].idx)},${base} ${pts.map((pt) => `L${xLine(pt.idx)},${Y(pt.total)}`).join(" ")} L${xLine(pts[pts.length - 1].idx)},${base} Z" fill="url(#${gradientId})"/>`;
+            }
+
             marks += `<polyline fill="none" stroke="${x.color}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map((pt) => `${xLine(pt.idx)},${Y(kind === "rank" ? pt.rank : pt.total)}`).join(" ")}"/>`;
             x.points.filter((pt) => pt.played).forEach((pt) => {
               const tip = kind === "rank" ? `rank #${pt.rank}` : `game ${pt.net >= 0 ? "+" : "-"}${money(Math.abs(pt.net))} · total ${fmt(pt.total)}`;
@@ -11703,7 +12001,7 @@ document
             });
           });
         }
-        return `<svg class="trend-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Leaderboard trend chart">${grid}${zero}${marks}
+        return `<svg class="trend-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Leaderboard trend chart"><defs>${defs}</defs>${grid}${zero}${marks}
           <text x="${L}" y="${H - 8}" font-size="11" fill="currentColor">${escapeHtml(dl(order[start][1]))}</text>
           <text x="${W - R}" y="${H - 8}" font-size="11" text-anchor="end" fill="currentColor">${escapeHtml(dl(order[order.length - 1][1]))}</text></svg>`;
       }
@@ -11755,7 +12053,7 @@ document
       });
 
       document.getElementById("leaderboard")?.addEventListener("click", (event) => {
-        if (event.target.closest("[data-lb-copy]")) { copyStandings(); return; }
+        if (event.target.closest("[data-lb-share]")) { shareStandingsImage(); return; }
         if (!event.target.closest("[data-lb-toggle-all]")) return;
         lbShowAll = !lbShowAll;
         if (!lbShowAll) expandedLeaderboardPlayerId = null;
@@ -11766,16 +12064,18 @@ document
 
       {
         const KEY = "poker-vault-theme";
-        const MODES = ["auto", "light", "dark"];
+        const MODES = ["auto", "light", "dark", "felt"];
         const media = window.matchMedia("(prefers-color-scheme: dark)");
         const readMode = () => {
           try { return localStorage.getItem(KEY) || "auto"; } catch { return "auto"; }
         };
         const applyTheme = () => {
           const mode = readMode();
-          const dark = mode === "dark" || (mode === "auto" && media.matches);
+          const dark = mode === "dark" || mode === "felt" || (mode === "auto" && media.matches);
           document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
-          document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#0b1517" : "#0f3a42");
+          if (mode === "felt") document.documentElement.setAttribute("data-skin", "felt");
+          else document.documentElement.removeAttribute("data-skin");
+          document.querySelector('meta[name="theme-color"]')?.setAttribute("content", mode === "felt" ? "#0a2a1d" : dark ? "#0b1517" : "#0f3a42");
           const label = document.getElementById("themeToggleLabel");
           if (label) label.textContent = `Theme: ${mode[0].toUpperCase()}${mode.slice(1)}`;
         };
@@ -11982,6 +12282,7 @@ document
         let st = fresh(null);
         let audioCtx = null;
         let wakeLock = null;
+        const tvOpen = () => !$("tvOverlay").hidden;
 
         const fullMs = () => st.minutes * 60000;
         const keyFor = (id) => `poker-vault-blinds-${id}`;
@@ -12028,7 +12329,7 @@ document
 
         const wake = async () => {
           try {
-            if (st.running && "wakeLock" in navigator && !wakeLock) {
+            if ((st.running || tvOpen()) && "wakeLock" in navigator && !wakeLock) {
               wakeLock = await navigator.wakeLock.request("screen");
               wakeLock.addEventListener("release", () => { wakeLock = null; });
             }
@@ -12049,6 +12350,10 @@ document
           clock.textContent = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
           clock.classList.toggle("low", st.running && total <= 60);
           clock.classList.toggle("paused", !st.running);
+          const ring = $("blindRing");
+          ring.classList.toggle("low", st.running && total <= 60);
+          ring.classList.toggle("paused", !st.running);
+          $("blindRingBar").style.strokeDashoffset = String((1 - Math.min(1, ms / fullMs())) * 100);
           $("blindLevelLabel").textContent = `Level ${st.level}`;
           const blindsEl = $("blindBlinds");
           if (blindsEl.dataset.level !== String(st.level)) {
@@ -12061,6 +12366,7 @@ document
           $("blindNext").textContent = `Next: ${fmtBlinds(st.level + 1)}`;
           $("blindStartButton").textContent = st.running ? "Pause" : st.remainingMs < fullMs() || st.level > 1 ? "Resume" : "Start";
           $("blindSoundButton").textContent = `Bell: ${st.sound ? "On" : "Off"}`;
+          if (tvOpen()) drawTv();
         };
 
         const tick = () => {
@@ -12080,11 +12386,12 @@ document
             if (advanced) {
               save();
               bell();
+              levelUpFlash();
               showToast(`Level ${st.level}: blinds ${fmtBlinds(st.level)}`, "success");
             }
           }
 
-          if (!$("tournamentSection").classList.contains("hidden")) draw();
+          if (!$("tournamentSection").classList.contains("hidden") || tvOpen()) draw();
         };
         window.setInterval(tick, 250);
 
@@ -12101,7 +12408,7 @@ document
           if (st.running) {
             st.remainingMs = Math.max(0, st.endAt - Date.now());
             st.running = false;
-            unwake();
+            if (!tvOpen()) unwake();
           } else {
             if (st.remainingMs <= 0) st.remainingMs = fullMs();
             st.endAt = Date.now() + st.remainingMs;
@@ -12117,7 +12424,7 @@ document
           st.level = 1;
           st.remainingMs = fullMs();
           st.running = false;
-          unwake();
+          if (!tvOpen()) unwake();
           save();
           draw();
         });
@@ -12134,6 +12441,96 @@ document
           save();
           draw();
           if (st.sound) bell();
+        });
+
+        // ---- TV mode: a big, glanceable clock to prop up on the table ----
+        let tvFullscreen = false;
+
+        const drawTv = () => {
+          const ms = st.running ? Math.max(0, st.endAt - Date.now()) : st.remainingMs;
+          const total = Math.ceil(ms / 1000);
+          const low = st.running && total <= 60;
+          const overlay = $("tvOverlay");
+
+          $("tvClock").textContent = `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+          $("tvClock").classList.toggle("low", low);
+          overlay.classList.toggle("low", low);
+          overlay.classList.toggle("paused", !st.running);
+          $("tvLevel").textContent = `Level ${st.level}`;
+          $("tvBlinds").textContent = fmtBlinds(st.level);
+          $("tvNext").textContent = `Next level: ${fmtBlinds(st.level + 1)}`;
+          $("tvBar").style.width = `${Math.min(1, ms / fullMs()) * 100}%`;
+          $("tvToggle").textContent = st.running ? "Pause" : st.remainingMs < fullMs() || st.level > 1 ? "Resume" : "Start";
+          $("tvGame").textContent = ($("gameName").value || "").trim();
+
+          $("tvStats").innerHTML = tournamentInfo.total
+            ? `<span>Players left <strong>${tournamentInfo.left}</strong> / ${tournamentInfo.total}</span><span>Prize pool <strong>${escapeHtml(money(tournamentInfo.pool))}</strong></span>`
+            : "";
+        };
+
+        const levelUpFlash = () => {
+          const overlay = $("tvOverlay");
+          if (overlay.hidden) return;
+          overlay.classList.remove("levelup");
+          void overlay.offsetWidth;
+          overlay.classList.add("levelup");
+          window.setTimeout(() => overlay.classList.remove("levelup"), 2600);
+        };
+
+        const openTv = async () => {
+          ensureAudio();
+          $("tvOverlay").hidden = false;
+          document.body.classList.add("modal-open");
+          wake();
+          drawTv();
+
+          try {
+            if ($("tvOverlay").requestFullscreen && !document.fullscreenElement) {
+              await $("tvOverlay").requestFullscreen();
+              tvFullscreen = true;
+            }
+          } catch {}
+        };
+
+        const closeTv = () => {
+          if (!tvOpen()) return;
+          $("tvOverlay").hidden = true;
+          document.body.classList.remove("modal-open");
+          if (!st.running) unwake();
+
+          if (document.fullscreenElement) {
+            tvFullscreen = false;
+            document.exitFullscreen?.().catch(() => {});
+          }
+        };
+
+        $("blindTvButton").addEventListener("click", openTv);
+        $("tvCloseButton").addEventListener("click", closeTv);
+        $("tvToggle").addEventListener("click", () => $("blindStartButton").click());
+        $("tvPrev").addEventListener("click", () => $("blindPrevButton").click());
+        $("tvNextLevel").addEventListener("click", () => $("blindNextButton").click());
+
+        // Leaving fullscreen with the browser's own Esc should leave TV mode too.
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement && tvFullscreen && tvOpen()) {
+            tvFullscreen = false;
+            closeTv();
+          }
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (!tvOpen()) return;
+
+          if (event.key === "Escape") {
+            closeTv();
+          } else if (event.key === " " && !event.target.closest?.("button")) {
+            event.preventDefault();
+            $("blindStartButton").click();
+          } else if (event.key === "ArrowRight") {
+            $("blindNextButton").click();
+          } else if (event.key === "ArrowLeft") {
+            $("blindPrevButton").click();
+          }
         });
       }
 
@@ -12169,6 +12566,169 @@ document
       document.getElementById("clearHistoryFiltersButton")?.addEventListener("click", syncHistoryFilterUI);
       syncHistoryFilterUI();
 
+      // ---- Shared pieces for the share images (compact, portrait) ----
+      const SHARE_SANS = '"Manrope","Inter",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif';
+      const SHARE_SERIF = '"Fraunces",Georgia,"Times New Roman",serif';
+
+      // Fonts and logo load first; both fall back gracefully so a slow font or
+      // a missing logo never blocks sharing.
+      async function loadShareAssets() {
+        try {
+          await Promise.race([
+            Promise.all([
+              document.fonts.load(`700 30px ${SHARE_SERIF}`),
+              document.fonts.load(`700 20px ${SHARE_SANS}`),
+            ]),
+            new Promise((resolve) => window.setTimeout(resolve, 1200)),
+          ]);
+        } catch {}
+
+        const logo = await new Promise((resolve) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = () => resolve(null);
+          image.src = new URL("icons/icon-192.png", document.baseURI).href;
+        });
+
+        return { logo };
+      }
+
+      function shareRoundRect(x, left, top, width, height, radius) {
+        x.beginPath();
+        x.moveTo(left + radius, top);
+        x.arcTo(left + width, top, left + width, top + height, radius);
+        x.arcTo(left + width, top + height, left, top + height, radius);
+        x.arcTo(left, top + height, left, top, radius);
+        x.arcTo(left, top, left + width, top, radius);
+        x.closePath();
+      }
+
+      function shareFit(x, text, font, max) {
+        x.font = font;
+        if (x.measureText(text).width <= max) return text;
+
+        let trimmed = text;
+        while (trimmed.length > 1 && x.measureText(`${trimmed}…`).width > max) {
+          trimmed = trimmed.slice(0, -1);
+        }
+        return `${trimmed}…`;
+      }
+
+      function shareCrown(x, cx, cy, size, color) {
+        const unit = size / 16;
+        x.save();
+        x.translate(cx - size / 2, cy - (size * 0.75) / 2);
+        x.scale(unit, unit);
+        x.fillStyle = color;
+        x.beginPath();
+        x.moveTo(1, 10.5);
+        x.lineTo(0.6, 3.4);
+        x.lineTo(4.2, 6.4);
+        x.lineTo(8, 1);
+        x.lineTo(11.8, 6.4);
+        x.lineTo(15.4, 3.4);
+        x.lineTo(15, 10.5);
+        x.closePath();
+        x.fill();
+        x.fillRect(1, 10.9, 14, 1.2);
+        x.restore();
+      }
+
+      // Slim header: logo, serif title, subtitle, brass rule.
+      const SHARE_HEAD = 108;
+      const SHARE_PAD = 36;
+      const SHARE_LOGO = 64;
+      const SHARE_TEXT_X = SHARE_PAD + SHARE_LOGO + 18;
+
+      function drawShareHeader(x, { W, logo, title, subtitle }) {
+        x.fillStyle = "#0f3a42";
+        x.fillRect(0, 0, W, SHARE_HEAD);
+        x.fillStyle = "#d4ab5e";
+        x.fillRect(0, SHARE_HEAD - 4, W, 4);
+
+        const logoY = (SHARE_HEAD - 4 - SHARE_LOGO) / 2;
+
+        x.save();
+        shareRoundRect(x, SHARE_PAD, logoY, SHARE_LOGO, SHARE_LOGO, 15);
+        x.clip();
+        if (logo) {
+          x.drawImage(logo, SHARE_PAD, logoY, SHARE_LOGO, SHARE_LOGO);
+        } else {
+          x.fillStyle = "#17525c";
+          x.fillRect(SHARE_PAD, logoY, SHARE_LOGO, SHARE_LOGO);
+          x.fillStyle = "#d4ab5e";
+          x.font = `700 38px ${SHARE_SERIF}`;
+          x.textAlign = "center";
+          x.textBaseline = "middle";
+          x.fillText("♠", SHARE_PAD + SHARE_LOGO / 2, logoY + SHARE_LOGO / 2 + 2);
+        }
+        x.restore();
+
+        shareRoundRect(x, SHARE_PAD, logoY, SHARE_LOGO, SHARE_LOGO, 15);
+        x.strokeStyle = "rgba(212,171,94,0.6)";
+        x.lineWidth = 1.2;
+        x.stroke();
+
+        const textMax = W - SHARE_TEXT_X - SHARE_PAD;
+        x.textAlign = "left";
+        x.textBaseline = "alphabetic";
+
+        x.fillStyle = "#ffffff";
+        const titleFont = `700 30px ${SHARE_SERIF}`;
+        x.fillText(shareFit(x, title, titleFont, textMax), SHARE_TEXT_X, logoY + 33);
+
+        x.fillStyle = "rgba(255,255,255,0.74)";
+        const subFont = `600 15px ${SHARE_SANS}`;
+        x.fillText(shareFit(x, subtitle, subFont, textMax), SHARE_TEXT_X, logoY + 58);
+      }
+
+      // Width follows the content, like a screenshot of the list.
+      function shareWidth(x, { title, subtitle, rowWidths }) {
+        x.font = `700 30px ${SHARE_SERIF}`;
+        const titleW = x.measureText(title).width;
+        x.font = `600 15px ${SHARE_SANS}`;
+        const subW = x.measureText(subtitle).width;
+
+        const headerNeed = SHARE_TEXT_X + Math.max(titleW, subW) + SHARE_PAD;
+        const rowsNeed = SHARE_PAD * 2 + rowWidths;
+
+        return Math.ceil(Math.min(720, Math.max(380, headerNeed, rowsNeed)));
+      }
+
+      function drawShareRowBackground(x, W, top, height, index) {
+        if (index % 2 === 0) {
+          x.fillStyle = "#f3f6f5";
+          x.fillRect(0, top, W, height);
+        }
+      }
+
+      async function deliverShareImage(canvas, fileName, title) {
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+
+        if (!blob) {
+          showToast("Could not create the image.", "error");
+          return;
+        }
+
+        const file = new File([blob], fileName, { type: "image/png" });
+
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title });
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") return;
+          }
+        }
+
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = fileName;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(link.href), 4000);
+        showToast("Image saved.", "success");
+      }
+
       async function shareSettlementImage() {
         if (!settlementShown) {
           showToast("Settle first.", "warning");
@@ -12183,53 +12743,39 @@ document
         }
 
         const payments = [...calculated].sort((a, b) => b.amount - a.amount);
-        const moving = payments.reduce((sum, payment) => sum + payment.amount, 0);
-
         const gameTitle = (document.getElementById("gameName").value || "Poker game").trim();
-        const groupName = selectedGroup()?.name || "";
-        const date = formatLeaderboardDate(
-          `${document.getElementById("gameDate").value || todayForInput()}T12:00:00`,
-        );
-        const subtitle = [groupName, date].filter(Boolean).join("  ·  ");
+        const gameDateValue = document.getElementById("gameDate").value || todayForInput();
+        const subtitle = `Poker Vault · ${formatLeaderboardDate(`${gameDateValue}T12:00:00`)} · Who pays whom`;
 
-        // Brand fonts and the logo are loaded before drawing; both fall back
-        // gracefully, so a slow font or missing logo never blocks sharing.
-        const SANS = '"Manrope","Inter",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif';
-        const SERIF = '"Fraunces",Georgia,"Times New Roman",serif';
+        const topWinner =
+          gameEntries
+            .map((entry) => ({
+              name: entry.name,
+              net: Math.round((toNumber(entry.cashout) - toNumber(entry.buyin)) * 100) / 100,
+            }))
+            .filter((entry) => entry.net > 0.005)
+            .sort((a, b) => b.net - a.net)[0] || null;
 
-        try {
-          await Promise.race([
-            Promise.all([
-              document.fonts.load(`700 30px ${SERIF}`),
-              document.fonts.load(`700 20px ${SANS}`),
-            ]),
-            new Promise((resolve) => window.setTimeout(resolve, 1200)),
-          ]);
-        } catch {}
-
-        const logo = await new Promise((resolve) => {
-          const image = new Image();
-          image.onload = () => resolve(image);
-          image.onerror = () => resolve(null);
-          image.src = new URL("icons/icon-192.png", document.baseURI).href;
-        });
+        const { logo } = await loadShareAssets();
 
         const S = 2;
-        const W = 720;
-        const PAD = 40;
-        const HEAD = 156;
-        const LABEL_H = 68;
-        const ROW_H = 76;
-        const ROW_GAP = 12;
-        const FOOT = 76;
-        const EVEN_H = 104;
+        const PAD = SHARE_PAD;
+        const ROW_H = 64;
+        const WIN_H = topWinner ? 48 : 0;
+        const rows = payments.length
+          ? payments.map((payment) => ({
+              left: `${payment.payerName}  →  ${payment.receiverName}`,
+              right: money(payment.amount),
+            }))
+          : [{ left: "Everyone is even. No payments are needed.", right: "" }];
 
-        const bodyH =
-          LABEL_H +
-          (payments.length
-            ? payments.length * (ROW_H + ROW_GAP)
-            : EVEN_H + ROW_GAP);
-        const H = HEAD + bodyH + FOOT;
+        const probe = document.createElement("canvas").getContext("2d");
+        probe.font = `700 21px ${SHARE_SANS}`;
+        const leftMax = Math.max(...rows.map((row) => probe.measureText(row.left).width));
+        const rightMax = Math.max(...rows.map((row) => (row.right ? probe.measureText(row.right).width : 0)));
+
+        const W = shareWidth(probe, { title: gameTitle, subtitle, rowWidths: leftMax + 40 + rightMax });
+        const H = SHARE_HEAD + WIN_H + rows.length * ROW_H + 24;
 
         const canvas = document.createElement("canvas");
         canvas.width = W * S;
@@ -12237,286 +12783,196 @@ document
         const x = canvas.getContext("2d");
         x.scale(S, S);
 
-        const roundRect = (left, top, width, height, radius) => {
-          x.beginPath();
-          x.moveTo(left + radius, top);
-          x.arcTo(left + width, top, left + width, top + height, radius);
-          x.arcTo(left + width, top + height, left, top + height, radius);
-          x.arcTo(left, top + height, left, top, radius);
-          x.arcTo(left, top, left + width, top, radius);
-          x.closePath();
-        };
-
-        const fit = (text, font, max) => {
-          x.font = font;
-          if (x.measureText(text).width <= max) return text;
-          let trimmed = text;
-          while (trimmed.length > 1 && x.measureText(`${trimmed}…`).width > max) {
-            trimmed = trimmed.slice(0, -1);
-          }
-          return `${trimmed}…`;
-        };
-
-        // Page background
-        x.fillStyle = "#f2f5f4";
+        x.fillStyle = "#ffffff";
         x.fillRect(0, 0, W, H);
 
-        // Header band
-        const band = x.createLinearGradient(0, 0, W, HEAD);
-        band.addColorStop(0, "#0a2a31");
-        band.addColorStop(0.6, "#0f3a42");
-        band.addColorStop(1, "#17525c");
-        x.fillStyle = band;
-        x.fillRect(0, 0, W, HEAD);
+        drawShareHeader(x, { W, logo, title: gameTitle, subtitle });
 
-        x.fillStyle = "rgba(255,255,255,0.045)";
-        x.beginPath();
-        x.arc(W - 40, 30, 130, 0, Math.PI * 2);
-        x.fill();
-        x.beginPath();
-        x.arc(W - 150, HEAD + 20, 70, 0, Math.PI * 2);
-        x.fill();
+        if (topWinner) {
+          const midY = SHARE_HEAD + WIN_H / 2;
+          x.fillStyle = "#fbf1dc";
+          x.fillRect(0, SHARE_HEAD, W, WIN_H);
 
-        x.fillStyle = "#d4ab5e";
-        x.fillRect(0, HEAD - 4, W, 4);
+          shareCrown(x, PAD + 11, midY, 22, "#b88a3e");
 
-        // Logo
-        const LOGO = 78;
-        const logoY = (HEAD - 4 - LOGO) / 2;
-        x.save();
-        roundRect(PAD, logoY, LOGO, LOGO, 18);
-        x.clip();
-        if (logo) {
-          x.drawImage(logo, PAD, logoY, LOGO, LOGO);
-        } else {
-          x.fillStyle = "#17525c";
-          x.fillRect(PAD, logoY, LOGO, LOGO);
-          x.fillStyle = "#d4ab5e";
-          x.font = `700 44px ${SERIF}`;
-          x.textAlign = "center";
+          const amountText = signedMoney(topWinner.net);
           x.textBaseline = "middle";
-          x.fillText("♠", PAD + LOGO / 2, logoY + LOGO / 2 + 2);
-        }
-        x.restore();
-        roundRect(PAD, logoY, LOGO, LOGO, 18);
-        x.strokeStyle = "rgba(212,171,94,0.7)";
-        x.lineWidth = 1.5;
-        x.stroke();
-
-        // Header text
-        const textX = PAD + LOGO + 22;
-        const textMax = W - textX - PAD;
-        x.textAlign = "left";
-        x.textBaseline = "alphabetic";
-
-        x.fillStyle = "#d4ab5e";
-        x.font = `800 13px ${SANS}`;
-        if ("letterSpacing" in x) x.letterSpacing = "2.5px";
-        x.fillText("POKER VAULT", textX, logoY + 17);
-        if ("letterSpacing" in x) x.letterSpacing = "0px";
-
-        x.fillStyle = "#ffffff";
-        const titleFont = `700 32px ${SERIF}`;
-        x.font = titleFont;
-        x.fillText(fit(gameTitle, titleFont, textMax), textX, logoY + 52);
-
-        x.fillStyle = "rgba(255,255,255,0.78)";
-        const subFont = `600 16px ${SANS}`;
-        x.font = subFont;
-        x.fillText(fit(subtitle, subFont, textMax), textX, logoY + 78);
-
-        // Section label
-        x.textBaseline = "middle";
-        x.fillStyle = "#3d4a49";
-        x.font = `800 13px ${SANS}`;
-        if ("letterSpacing" in x) x.letterSpacing = "1.5px";
-        x.fillText("WHO PAYS WHOM", PAD, HEAD + 36);
-        if ("letterSpacing" in x) x.letterSpacing = "0px";
-
-        if (payments.length) {
           x.textAlign = "right";
-          x.fillStyle = "#7a8786";
-          x.font = `600 14px ${SANS}`;
-          x.fillText(
-            `${payments.length} payment${payments.length === 1 ? "" : "s"}  ·  ${money(moving)} changing hands`,
-            W - PAD,
-            HEAD + 36,
-          );
+          x.fillStyle = "#14704f";
+          x.font = `800 20px ${SHARE_SANS}`;
+          x.fillText(amountText, W - PAD, midY + 1);
+          const amountW = x.measureText(amountText).width;
+
           x.textAlign = "left";
+          x.fillStyle = "#16201f";
+          const winnerFont = `700 18px ${SHARE_SANS}`;
+          x.font = winnerFont;
+          const label = `Top winner: ${topWinner.name}`;
+          x.fillText(shareFit(x, label, winnerFont, W - PAD * 2 - 34 - amountW - 12), PAD + 34, midY + 1);
         }
 
-        const cardLeft = PAD;
-        const cardW = W - PAD * 2;
-        const rowsTop = HEAD + LABEL_H - 10;
+        const rowsTop = SHARE_HEAD + WIN_H;
 
-        const drawCard = (top, height) => {
-          x.save();
-          x.shadowColor = "rgba(15,40,44,0.10)";
-          x.shadowBlur = 12;
-          x.shadowOffsetY = 3;
-          x.fillStyle = "#ffffff";
-          roundRect(cardLeft, top, cardW, height, 16);
-          x.fill();
-          x.restore();
-          roundRect(cardLeft, top, cardW, height, 16);
-          x.strokeStyle = "#e2e7e6";
-          x.lineWidth = 1;
-          x.stroke();
-        };
+        rows.forEach((row, index) => {
+          const top = rowsTop + index * ROW_H;
+          const cy = top + ROW_H / 2 + 1;
+          drawShareRowBackground(x, W, top, ROW_H, index);
 
-        if (!payments.length) {
-          drawCard(rowsTop, EVEN_H);
-          const cy = rowsTop + EVEN_H / 2;
-          x.fillStyle = "#14704f";
-          x.beginPath();
-          x.arc(cardLeft + 52, cy, 22, 0, Math.PI * 2);
-          x.fill();
-          x.strokeStyle = "#ffffff";
-          x.lineWidth = 3.5;
-          x.lineCap = "round";
-          x.lineJoin = "round";
-          x.beginPath();
-          x.moveTo(cardLeft + 42, cy + 1);
-          x.lineTo(cardLeft + 50, cy + 9);
-          x.lineTo(cardLeft + 63, cy - 7);
-          x.stroke();
-          x.textBaseline = "alphabetic";
-          x.fillStyle = "#14704f";
-          x.font = `800 22px ${SANS}`;
-          x.fillText("Everyone is even", cardLeft + 92, cy - 2);
-          x.fillStyle = "#7a8786";
-          x.font = `500 15px ${SANS}`;
-          x.fillText("No payments are needed for this game.", cardLeft + 92, cy + 22);
-        }
-
-        payments.forEach((payment, index) => {
-          const top = rowsTop + index * (ROW_H + ROW_GAP);
-          const cy = top + ROW_H / 2;
-          drawCard(top, ROW_H);
-
-          // Numbered chip; the biggest transfer gets the brass one.
-          const chipX = cardLeft + 36;
-          x.fillStyle = index === 0 ? "#b88a3e" : "#17525c";
-          x.beginPath();
-          x.arc(chipX, cy, 17, 0, Math.PI * 2);
-          x.fill();
-          x.setLineDash([3, 3]);
-          x.strokeStyle = "rgba(255,255,255,0.75)";
-          x.lineWidth = 1.2;
-          x.beginPath();
-          x.arc(chipX, cy, 13, 0, Math.PI * 2);
-          x.stroke();
-          x.setLineDash([]);
-          x.fillStyle = "#ffffff";
-          x.font = `800 14px ${SANS}`;
-          x.textAlign = "center";
           x.textBaseline = "middle";
-          x.fillText(String(index + 1), chipX, cy + 1);
+          x.font = `700 21px ${SHARE_SANS}`;
 
-          // Amount pill on the right
-          const amountText = money(payment.amount);
-          x.font = `800 22px ${SANS}`;
-          const pillW = x.measureText(amountText).width + 34;
-          const pillX = cardLeft + cardW - 20 - pillW;
-          x.fillStyle = "#e3f1ea";
-          roundRect(pillX, cy - 21, pillW, 42, 21);
-          x.fill();
-          x.fillStyle = "#14704f";
-          x.textAlign = "center";
-          x.fillText(amountText, pillX + pillW / 2, cy + 1);
-
-          // payer → receiver, sharing the space left of the pill
-          const nameFont = `700 21px ${SANS}`;
-          const ARROW = 24;
-          const GAP = 12;
-          const flowLeft = chipX + 17 + 20;
-          const avail = pillX - 18 - flowLeft - ARROW - GAP * 2;
-
-          x.font = nameFont;
-          const w1 = x.measureText(payment.payerName).width;
-          const w2 = x.measureText(payment.receiverName).width;
-          const half = avail / 2;
-          let cap1 = half;
-          let cap2 = half;
-          if (w1 + w2 <= avail) {
-            cap1 = w1;
-            cap2 = w2;
-          } else if (w1 < half) {
-            cap1 = w1;
-            cap2 = avail - w1;
-          } else if (w2 < half) {
-            cap2 = w2;
-            cap1 = avail - w2;
+          let rightW = 0;
+          if (row.right) {
+            x.textAlign = "right";
+            x.fillStyle = "#14704f";
+            x.fillText(row.right, W - PAD, cy);
+            rightW = x.measureText(row.right).width;
           }
 
-          const payer = fit(payment.payerName, nameFont, cap1);
-          const receiver = fit(payment.receiverName, nameFont, cap2);
-
-          x.font = nameFont;
           x.textAlign = "left";
           x.fillStyle = "#16201f";
-          x.fillText(payer, flowLeft, cy + 1);
-          const payerW = x.measureText(payer).width;
-
-          const arrowX = flowLeft + payerW + GAP;
-          x.strokeStyle = "#b88a3e";
-          x.lineWidth = 2.5;
-          x.lineCap = "round";
-          x.lineJoin = "round";
-          x.beginPath();
-          x.moveTo(arrowX, cy);
-          x.lineTo(arrowX + ARROW - 2, cy);
-          x.moveTo(arrowX + ARROW - 8, cy - 6);
-          x.lineTo(arrowX + ARROW - 2, cy);
-          x.lineTo(arrowX + ARROW - 8, cy + 6);
-          x.stroke();
-
-          x.fillStyle = "#16201f";
-          x.font = nameFont;
-          x.fillText(receiver, arrowX + ARROW + GAP, cy + 1);
+          x.fillText(shareFit(x, row.left, `700 21px ${SHARE_SANS}`, W - PAD * 2 - rightW - 20), PAD, cy);
         });
 
-        // Footer
-        const footY = H - FOOT;
-        x.strokeStyle = "#dfe5e4";
-        x.lineWidth = 1;
-        x.beginPath();
-        x.moveTo(PAD, footY + 6);
-        x.lineTo(W - PAD, footY + 6);
-        x.stroke();
+        await deliverShareImage(canvas, `settlement-${gameDateValue}.png`, gameTitle);
+      }
 
-        x.textAlign = "center";
-        x.textBaseline = "middle";
-        x.fillStyle = "#7a8786";
-        x.font = `600 14px ${SANS}`;
-        x.fillText("Settled with Poker Vault  ♠", W / 2, footY + FOOT / 2 + 6);
+      function leaderboardPeriodShort() {
+        const names = { all: "All time", month: "This month", "30d": "Last 30 days", year: "This year" };
+        let text =
+          names[activePeriodKey()] ||
+          `${leaderboardStartDate || "Start"} – ${leaderboardEndDate || "today"}`;
 
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+        if (leaderboardMinGames > 0) text += ` · min. ${leaderboardMinGames} games`;
+        return text;
+      }
 
-        if (!blob) {
-          showToast("Could not create the image.", "error");
+      async function shareStandingsImage() {
+        const players = lbPlayersCache;
+
+        if (!players.length) {
+          showToast("No standings to share yet.", "warning");
           return;
         }
 
-        const fileName = `settlement-${document.getElementById("gameDate").value || todayForInput()}.png`;
-        const file = new File([blob], fileName, { type: "image/png" });
+        const MAX_ROWS = 12;
+        const shown = players.slice(0, MAX_ROWS);
+        const extra = players.length - shown.length;
+        const groupName = selectedGroup()?.name || "Poker Vault";
+        const subtitle = `Poker Vault · ${leaderboardPeriodShort()} · Standings`;
 
-        if (navigator.canShare?.({ files: [file] })) {
-          try {
-            await navigator.share({ files: [file], title: gameTitle });
-            return;
-          } catch (error) {
-            if (error.name === "AbortError") return;
-          }
+        const { logo } = await loadShareAssets();
+
+        const S = 2;
+        const PAD = SHARE_PAD;
+        const ROW_H = 64;
+        const MORE_H = extra > 0 ? 40 : 0;
+        const RANK_X = PAD + 15;
+        const NAME_X = PAD + 42;
+
+        const probe = document.createElement("canvas").getContext("2d");
+        probe.font = `800 21px ${SHARE_SANS}`;
+        const rightMax = Math.max(...shown.map((player) => probe.measureText(signedMoney(Number(player.net_result))).width));
+        probe.font = `700 21px ${SHARE_SANS}`;
+        const nameMax = Math.max(...shown.map((player) => probe.measureText(player.player_name).width));
+
+        const W = shareWidth(probe, {
+          title: groupName,
+          subtitle,
+          rowWidths: 42 - PAD + nameMax + 40 + rightMax,
+        });
+        const H = SHARE_HEAD + shown.length * ROW_H + MORE_H + 24;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = W * S;
+        canvas.height = H * S;
+        const x = canvas.getContext("2d");
+        x.scale(S, S);
+
+        x.fillStyle = "#ffffff";
+        x.fillRect(0, 0, W, H);
+
+        drawShareHeader(x, { W, logo, title: groupName, subtitle });
+
+        const RANK_COLORS = {
+          1: ["#d9aa43", "#3b2d00"],
+          2: ["#c3cccb", "#26302f"],
+          3: ["#b26a35", "#ffffff"],
+        };
+
+        shown.forEach((player, index) => {
+          const top = SHARE_HEAD + index * ROW_H;
+          const cy = top + ROW_H / 2;
+          const rank = player.profit_rank;
+          const net = Number(player.net_result);
+          const games = Number(player.games_played) || 0;
+          const avg = games > 0 ? net / games : 0;
+          const leader = rank === 1 && net > 0;
+
+          drawShareRowBackground(x, W, top, ROW_H, index);
+
+          const [chipColor, chipInk] = RANK_COLORS[rank] || ["#17525c", "#ffffff"];
+          x.fillStyle = chipColor;
+          x.beginPath();
+          x.arc(RANK_X, cy, 14, 0, Math.PI * 2);
+          x.fill();
+          x.setLineDash([2.5, 2.5]);
+          x.strokeStyle = "rgba(255,255,255,0.8)";
+          x.lineWidth = 1;
+          x.beginPath();
+          x.arc(RANK_X, cy, 10.5, 0, Math.PI * 2);
+          x.stroke();
+          x.setLineDash([]);
+          x.fillStyle = chipInk;
+          x.font = `800 13px ${SHARE_SANS}`;
+          x.textAlign = "center";
+          x.textBaseline = "middle";
+          x.fillText(String(rank), RANK_X, cy + 1);
+
+          const netText = signedMoney(net);
+          x.font = `800 21px ${SHARE_SANS}`;
+          x.textAlign = "right";
+          x.fillStyle = net > 0.005 ? "#14704f" : net < -0.005 ? "#a63a2b" : "#3d4a49";
+          x.fillText(netText, W - PAD, cy);
+          const netW = x.measureText(netText).width;
+
+          const crownW = leader ? 24 : 0;
+          if (leader) shareCrown(x, NAME_X + 9, cy - 9, 18, "#b88a3e");
+
+          const nameFont = `700 21px ${SHARE_SANS}`;
+          x.textAlign = "left";
+          x.fillStyle = "#16201f";
+          x.font = nameFont;
+          x.fillText(
+            shareFit(x, player.player_name, nameFont, W - NAME_X - crownW - PAD - netW - 16),
+            NAME_X + crownW,
+            cy - 9,
+          );
+
+          x.fillStyle = "#7a8786";
+          x.font = `600 13px ${SHARE_SANS}`;
+          x.fillText(
+            `${games} ${games === 1 ? "game" : "games"} · avg ${signedMoney(avg)}`,
+            NAME_X + crownW,
+            cy + 14,
+          );
+        });
+
+        if (extra > 0) {
+          x.textAlign = "center";
+          x.textBaseline = "middle";
+          x.fillStyle = "#7a8786";
+          x.font = `600 14px ${SHARE_SANS}`;
+          x.fillText(
+            `+ ${extra} more player${extra === 1 ? "" : "s"}`,
+            W / 2,
+            SHARE_HEAD + shown.length * ROW_H + 18,
+          );
         }
 
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = fileName;
-        link.click();
-        window.setTimeout(() => URL.revokeObjectURL(link.href), 4000);
-        showToast("Settlement image saved.", "success");
+        await deliverShareImage(canvas, `standings-${todayForInput()}.png`, `${groupName} standings`);
       }
+
       document.getElementById("shareImageButton")?.addEventListener("click", shareSettlementImage);
 
       async function reopenPastGame(gameId) {
@@ -12636,6 +13092,29 @@ document
         <div class="qr-actions">
           <button type="button" class="secondary small" id="qrCopyLinkButton">Copy invite link</button>
           <button type="button" class="ghost small" id="qrCopyCodeButton">Copy code</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tv-overlay" id="tvOverlay" hidden role="dialog" aria-modal="true" aria-label="Tournament clock">
+      <div class="tv-top">
+        <span class="tv-brand">POKER VAULT</span>
+        <span class="tv-game" id="tvGame"></span>
+        <button type="button" class="tv-close" id="tvCloseButton">Exit</button>
+      </div>
+      <div class="tv-main">
+        <div class="tv-level" id="tvLevel">Level 1</div>
+        <div class="tv-blinds" id="tvBlinds">25 / 50</div>
+        <div class="tv-clock" id="tvClock">15:00</div>
+        <div class="tv-bar"><span id="tvBar"></span></div>
+        <div class="tv-next" id="tvNext"></div>
+      </div>
+      <div class="tv-foot">
+        <div class="tv-stats" id="tvStats"></div>
+        <div class="tv-controls">
+          <button type="button" id="tvPrev">&lsaquo; Level</button>
+          <button type="button" id="tvToggle">Start</button>
+          <button type="button" id="tvNextLevel">Level &rsaquo;</button>
         </div>
       </div>
     </div>

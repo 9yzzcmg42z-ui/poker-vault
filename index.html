@@ -4893,6 +4893,11 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
                 />
               </div>
 
+              <div class="filter-field">
+                <label for="leaderboardActiveDays">Active in last (days)</label>
+                <input id="leaderboardActiveDays" type="number" min="1" step="1" inputmode="numeric" placeholder="Any" />
+              </div>
+
               <button class="secondary" id="applyLeaderboardFilterButton">
                 Apply
               </button>
@@ -5102,7 +5107,8 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
       let groupGameSubscription = null;
       let leaderboardStartDate = "";
       let leaderboardEndDate = "";
-      let leaderboardMinGames = 0;
+      let leaderboardMinGames = Number(localStorage.getItem("poker-vault-lb-min-games")) || 0;
+      let leaderboardActiveDays = Number(localStorage.getItem("poker-vault-lb-active-days")) || 0;
       let expandedLeaderboardPlayerId = null;
       let lbShowAll = false;
       let lbPlayersCache = [];
@@ -5706,7 +5712,8 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
 
         // Starting the next game should be available both when there has
         // never been a game and when the previous game was just closed.
-        toggleHidden("startGameButton", false);
+        document.getElementById("startGameButton")?.classList.remove("hidden");
+        document.getElementById("startSameGameButton")?.classList.remove("hidden");
         updateReopenButton();
 
         // Host copy about adding players and settling has nothing to do with a
@@ -9015,8 +9022,18 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
         // participated in at least this many completed games within the
         // selected date range. Their leaderboard totals still use ALL of
         // their qualifying-period games, not just the minimum number.
+        const activeCutoff =
+          leaderboardActiveDays > 0
+            ? Date.now() - leaderboardActiveDays * 86400000
+            : null;
+
         const eligiblePlayers = Array.from(totalsByPlayer.values()).filter(
-          (player) => player.games_played >= leaderboardMinGames,
+          (player) =>
+            player.games_played >= leaderboardMinGames &&
+            (activeCutoff === null ||
+              player.sessions.some(
+                (session) => new Date(session.playedAt).getTime() >= activeCutoff,
+              )),
         );
 
         const players = eligiblePlayers
@@ -10512,12 +10529,12 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
         // first member who successfully saves it becomes that game's host.
         if (!liveGame) {
           showNoLiveGame("none");
-          toggleHidden("startGameButton", false);
+          document.getElementById("startGameButton")?.classList.remove("hidden");
+        document.getElementById("startSameGameButton")?.classList.remove("hidden");
           return;
         }
 
-        toggleHidden("startGameButton", true);
-
+        
         // A draft is the group's current game. Everyone lands in it;
         // permissions inside the game determine whether the user can edit it.
         try {
@@ -10771,6 +10788,18 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
             leaderboardMinGames = minimumGames;
           }
 
+          const activeRaw = document.getElementById("leaderboardActiveDays").value.trim();
+          if (activeRaw === "") {
+            leaderboardActiveDays = 0;
+          } else {
+            const days = Number(activeRaw);
+            if (!Number.isInteger(days) || days < 1) {
+              showToast("Active days must be a whole number of 1 or more.", "warning");
+              return;
+            }
+            leaderboardActiveDays = days;
+          }
+
           if (
             leaderboardStartDate &&
             leaderboardEndDate &&
@@ -10793,6 +10822,8 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
           document.getElementById("leaderboardStartDate").value = "";
           document.getElementById("leaderboardEndDate").value = "";
           document.getElementById("leaderboardMinGames").value = "";
+          leaderboardActiveDays = 0;
+          document.getElementById("leaderboardActiveDays").value = "";
 
           await loadLeaderboard();
         });
@@ -10910,7 +10941,11 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
       async function saveEditingEntry(playerId) {
         if (savingPlayerEntries.has(playerId)) return false;
 
-        const entry = gameEntries.find((item) => item.playerId === playerId);
+        // Always look the entry up fresh: loadBuyinTransactions() replaces the
+        // objects in gameEntries, so an old reference goes stale.
+        const getEntry = () => gameEntries.find((item) => item.playerId === playerId);
+
+        const entry = getEntry();
         if (!entry || !canEditActiveGame()) return false;
 
         savingPlayerEntries.add(playerId);
@@ -10947,9 +10982,10 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
               if (!gameId) return false;
             }
 
-            // Typed buy-ins are additional transactions. saveGame only writes
-            // the resulting total to game_entries and never creates a
-            // transaction row, so this insert happens exactly once.
+            // Consume the typed amount NOW so nothing can add it a second time.
+            const liveBefore = getEntry();
+            if (liveBefore) liveBefore.pendingBuyin = "";
+
             const { error } = await supabase
               .from("game_buyin_transactions")
               .insert({
@@ -10960,6 +10996,8 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
 
             if (error) {
               console.error(error);
+              const liveAfterError = getEntry();
+              if (liveAfterError) liveAfterError.pendingBuyin = rawBuyin; // let them retry
               showToast(`Could not save buy-in: ${error.message}`, "error");
               return false;
             }
@@ -10967,8 +11005,13 @@ button.compact-player-name{display:flex;align-items:center;gap:10px}
             await loadBuyinTransactions(currentGameId);
           }
 
-          entry.pendingBuyin = "";
-          entry.isEditing = false;
+          // Close the row on the CURRENT object, not the stale one.
+          const live = getEntry();
+          if (live) {
+            live.pendingBuyin = "";
+            live.isEditing = false;
+          }
+
           await saveGame(false);
           renderGameEntries();
           updateGameTotals();
@@ -12152,6 +12195,11 @@ document
         document.getElementById("leaderboardStartDate").value = leaderboardStartDate;
         document.getElementById("leaderboardEndDate").value = leaderboardEndDate;
         document.getElementById("leaderboardMinGames").value = leaderboardMinGames > 0 ? leaderboardMinGames : "";
+        document.getElementById("leaderboardActiveDays").value = leaderboardActiveDays > 0 ? leaderboardActiveDays : "";
+        try {
+          localStorage.setItem("poker-vault-lb-min-games", String(leaderboardMinGames));
+          localStorage.setItem("poker-vault-lb-active-days", String(leaderboardActiveDays));
+        } catch {}
 
         const key = activePeriodKey();
         document.querySelectorAll("[data-period]").forEach((button) => {
@@ -12160,7 +12208,7 @@ document
           button.setAttribute("aria-pressed", String(on));
         });
 
-        const count = (leaderboardMinGames > 0 ? 1 : 0) + (key ? 0 : 1);
+        const count = (leaderboardMinGames > 0 ? 1 : 0) + (leaderboardActiveDays > 0 ? 1 : 0) + (key ? 0 : 1);
         const filtersButton = document.getElementById("toggleLbFiltersButton");
         filtersButton.dataset.count = count ? String(count) : "";
         filtersButton.setAttribute("aria-label", count ? `Filters, ${count} active` : "Filters");
